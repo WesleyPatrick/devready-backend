@@ -1,0 +1,84 @@
+slug: flatten-nested-list
+title: Achatar lista de listas
+area: frontend
+level: junior
+difficulty: easy
+tags: [arrays]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe uma lista de listas de inteiros, como os itens de várias páginas de uma listagem paginada. Devolva uma única lista com todos os números, preservando a ordem: primeiro os da primeira lista, depois os da segunda, e assim por diante. Listas internas podem estar vazias.
+
+  Escreva o laço você mesmo, sem usar funções prontas de achatamento como `flat`.
+
+  Exemplo: `[[1, 2], [3], [4, 5, 6]]` produz `[1, 2, 3, 4, 5, 6]`.
+approachSummary: |
+  Percorra a lista externa e, para cada lista interna, acrescente os elementos dela ao resultado na ordem em que aparecem. Cada número é visitado uma vez, então o tempo é O(n) no total de elementos e a memória é O(n) para o resultado. Como a profundidade é fixa em dois níveis, não é preciso recursão. O cuidado é não alterar as listas recebidas, por exemplo reaproveitando a primeira lista interna como resultado e acrescentando nela as outras.
+languages:
+  java:
+    functionName: flatten
+    starterCode: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<Integer> flatten(List<List<Integer>> lists) {
+              // sua solução
+              return new ArrayList<>();
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<Integer> flatten(List<List<Integer>> lists) {
+              List<Integer> result = new ArrayList<>();
+              for (List<Integer> inner : lists) {
+                  result.addAll(inner);
+              }
+              return result;
+          }
+      }
+  python:
+    functionName: flatten
+    starterCode: |
+      class Solution:
+          def flatten(self, lists):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def flatten(self, lists):
+              result = []
+              for inner in lists:
+                  for value in inner:
+                      result.append(value)
+              return result
+  javascript:
+    functionName: flatten
+    starterCode: |
+      class Solution {
+        flatten(lists) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        flatten(lists) {
+          const result = [];
+          for (const inner of lists) {
+            for (const value of inner) result.push(value);
+          }
+          return result;
+        }
+      }
+testCases:
+  - { args: [[[1, 2], [3], [4, 5, 6]]], expected: [1, 2, 3, 4, 5, 6], visible: true }
+  - { args: [[[], [1], []]], expected: [1], visible: true }
+  - { args: [[]], expected: [], visible: false }
+  - { args: [[[7]]], expected: [7], visible: false }
+  - { args: [[[3, 1], [2, 2]]], expected: [3, 1, 2, 2], visible: false }
+  - { args: [[[], []]], expected: [], visible: false }

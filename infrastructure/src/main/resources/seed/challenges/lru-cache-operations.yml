@@ -1,0 +1,137 @@
+slug: lru-cache-operations
+title: Cache LRU por operações
+area: backend
+level: pleno
+difficulty: medium
+tags: [estruturas-de-dados, hash-map, cache]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Simule um cache LRU (menos recentemente usado) com a capacidade dada, que é pelo menos 1. As operações chegam como texto, em ordem:
+
+  - `"put chave valor"` grava o valor (se a chave já existe, atualiza); se passar da capacidade, remove a chave usada há mais tempo.
+  - `"get chave"` lê o valor.
+
+  Tanto `put` quanto `get` de uma chave existente contam como uso recente. Chaves e valores são inteiros. Devolva a lista com o resultado de cada `get`, na ordem, usando `-1` quando a chave não está no cache.
+
+  Exemplo: capacidade 2 e `["put 1 10", "put 2 20", "get 1", "put 3 30", "get 2"]` produzem `[10, -1]`, porque o `put 3 30` removeu a chave 2.
+approachSummary: |
+  Combine um mapa (acesso em O(1) por chave) com uma ordem de uso que permita mover um item para o "mais recente" e remover o "mais antigo" em O(1): uma lista duplamente encadeada, ou um mapa que preserva a ordem de inserção (`LinkedHashMap` com ordem de acesso, `OrderedDict`, `Map` do JavaScript apagando e reinserindo a chave). Cada operação custa O(1), e o total é O(n) para n operações, com O(capacidade) de memória. Guardar só uma lista e procurar a chave a cada operação custaria O(capacidade) por operação.
+languages:
+  java:
+    functionName: lruCache
+    starterCode: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<Integer> lruCache(int capacity, List<String> operations) {
+              // sua solução
+              return new ArrayList<>();
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.LinkedHashMap;
+      import java.util.List;
+      import java.util.Map;
+
+      class Solution {
+          public List<Integer> lruCache(int capacity, List<String> operations) {
+              final int limit = capacity;
+              Map<Integer, Integer> cache =
+                      new LinkedHashMap<Integer, Integer>(16, 0.75f, true) {
+                          @Override
+                          protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+                              return size() > limit;
+                          }
+                      };
+              List<Integer> results = new ArrayList<>();
+              for (String operation : operations) {
+                  String[] parts = operation.split(" ");
+                  int key = Integer.parseInt(parts[1]);
+                  if (parts[0].equals("put")) {
+                      cache.put(key, Integer.parseInt(parts[2]));
+                  } else {
+                      Integer value = cache.get(key);
+                      results.add(value == null ? -1 : value);
+                  }
+              }
+              return results;
+          }
+      }
+  python:
+    functionName: lru_cache
+    starterCode: |
+      class Solution:
+          def lru_cache(self, capacity, operations):
+              # sua solução
+              return []
+    referenceSolution: |
+      from collections import OrderedDict
+
+
+      class Solution:
+          def lru_cache(self, capacity, operations):
+              cache = OrderedDict()
+              results = []
+              for operation in operations:
+                  parts = operation.split(" ")
+                  key = int(parts[1])
+                  if parts[0] == "put":
+                      cache[key] = int(parts[2])
+                      cache.move_to_end(key)
+                      if len(cache) > capacity:
+                          cache.popitem(last=False)
+                  else:
+                      if key in cache:
+                          cache.move_to_end(key)
+                          results.append(cache[key])
+                      else:
+                          results.append(-1)
+              return results
+  javascript:
+    functionName: lruCache
+    starterCode: |
+      class Solution {
+        lruCache(capacity, operations) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        lruCache(capacity, operations) {
+          const cache = new Map();
+          const results = [];
+          for (const operation of operations) {
+            const parts = operation.split(" ");
+            const key = Number(parts[1]);
+            if (parts[0] === "put") {
+              cache.delete(key);
+              cache.set(key, Number(parts[2]));
+              if (cache.size > capacity) {
+                cache.delete(cache.keys().next().value);
+              }
+            } else if (cache.has(key)) {
+              const value = cache.get(key);
+              cache.delete(key);
+              cache.set(key, value);
+              results.push(value);
+            } else {
+              results.push(-1);
+            }
+          }
+          return results;
+        }
+      }
+testCases:
+  - { args: [2, ["put 1 10", "put 2 20", "get 1", "put 3 30", "get 2", "put 4 40", "get 1", "get 3", "get 4"]], expected: [10, -1, -1, 30, 40], visible: true }
+  - { args: [1, ["put 1 5", "get 1", "put 2 6", "get 1", "get 2"]], expected: [5, -1, 6], visible: true }
+  - { args: [2, ["put 1 1", "put 2 2", "put 1 100", "put 3 3", "get 2", "get 1", "get 3"]], expected: [-1, 100, 3], visible: false }
+  - { args: [3, ["put 1 1", "put 2 2"]], expected: [], visible: false }
+  - { args: [2, []], expected: [], visible: false }
+  - { args: [2, ["get 9"]], expected: [-1], visible: false }
+  - { args: [3, ["put 1 1", "put 2 2", "put 3 3", "get 1", "put 4 4", "get 2", "get 3", "get 1", "get 4"]], expected: [1, -1, 3, 1, 4], visible: false }
+  - { args: [2, ["put 1 0", "get 1", "put 2 -7", "get 2"]], expected: [0, -7], visible: false }

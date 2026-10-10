@@ -1,0 +1,60 @@
+# As vagas de cada trilha de área são a contagem da primeira leva da pesquisa de vagas. Os pesos, as
+# vagas por competência e as trilhas de stack são uma estimativa feita a partir dessa leva. A
+# exportação do devready-research substitui este arquivo.
+company: google
+tracks:
+  - area: backend
+    stack: todas
+    seniority: todas
+    jobs: 24
+    units:
+      - { competency: estruturas-de-dados-e-algoritmos, weight: 0.92, requirement: obrigatoria, jobs: 22 }
+      - { competency: design-de-sistemas, weight: 0.71, requirement: obrigatoria, jobs: 17 }
+      - { competency: sql-e-modelagem-de-dados, weight: 0.38, requirement: desejavel, jobs: 9 }
+      - { competency: java, weight: 0.5, requirement: obrigatoria, jobs: 12 }
+      - { competency: python, weight: 0.46, requirement: obrigatoria, jobs: 11 }
+      - { competency: go, weight: 0.29, requirement: desejavel, jobs: 7 }
+      - { competency: testes-automatizados, weight: 0.42, requirement: obrigatoria, jobs: 10 }
+      - { competency: apis-rest, weight: 0.33, requirement: desejavel, jobs: 8 }
+      - { competency: nuvem, weight: 0.25, requirement: desejavel, jobs: 6 }
+      - { competency: comunicacao-e-trabalho-em-equipe, weight: 0.29, requirement: desejavel, jobs: 7 }
+  - area: backend
+    stack: java-spring
+    seniority: todas
+    jobs: 9
+    units:
+      - { competency: estruturas-de-dados-e-algoritmos, weight: 1.0, requirement: obrigatoria, jobs: 9 }
+      - { competency: design-de-sistemas, weight: 0.67, requirement: obrigatoria, jobs: 6 }
+      - { competency: sql-e-modelagem-de-dados, weight: 0.44, requirement: obrigatoria, jobs: 4 }
+      - { competency: java, weight: 0.89, requirement: obrigatoria, jobs: 8 }
+      - { competency: spring, weight: 0.56, requirement: obrigatoria, jobs: 5 }
+      - { competency: testes-automatizados, weight: 0.56, requirement: obrigatoria, jobs: 5 }
+      - { competency: apis-rest, weight: 0.44, requirement: obrigatoria, jobs: 4 }
+      - { competency: nuvem, weight: 0.33, requirement: desejavel, jobs: 3 }
+      - { competency: comunicacao-e-trabalho-em-equipe, weight: 0.33, requirement: desejavel, jobs: 3 }
+  - area: devops
+    stack: todas
+    seniority: todas
+    jobs: 10
+    units:
+      - { competency: design-de-sistemas, weight: 0.6, requirement: obrigatoria, jobs: 6 }
+      - { competency: estruturas-de-dados-e-algoritmos, weight: 0.5, requirement: obrigatoria, jobs: 5 }
+      - { competency: python, weight: 0.5, requirement: obrigatoria, jobs: 5 }
+      - { competency: go, weight: 0.4, requirement: desejavel, jobs: 4 }
+      - { competency: nuvem, weight: 0.7, requirement: obrigatoria, jobs: 7 }
+      - { competency: containers-e-orquestracao, weight: 0.6, requirement: obrigatoria, jobs: 6 }
+      - { competency: observabilidade, weight: 0.6, requirement: obrigatoria, jobs: 6 }
+      - { competency: ci-cd, weight: 0.4, requirement: desejavel, jobs: 4 }
+      - { competency: seguranca-de-aplicacoes, weight: 0.3, requirement: desejavel, jobs: 3 }
+      - { competency: comunicacao-e-trabalho-em-equipe, weight: 0.3, requirement: desejavel, jobs: 3 }
+  - area: frontend
+    stack: todas
+    seniority: todas
+    jobs: 3
+    units:
+      - { competency: estruturas-de-dados-e-algoritmos, weight: 0.67, requirement: obrigatoria, jobs: 2 }
+      - { competency: design-de-sistemas, weight: 0.33, requirement: desejavel, jobs: 1 }
+      - { competency: javascript-e-typescript, weight: 1.0, requirement: obrigatoria, jobs: 3 }
+      - { competency: react, weight: 0.33, requirement: desejavel, jobs: 1 }
+      - { competency: testes-automatizados, weight: 0.33, requirement: desejavel, jobs: 1 }
+      - { competency: comunicacao-e-trabalho-em-equipe, weight: 0.33, requirement: desejavel, jobs: 1 }

@@ -1,0 +1,7 @@
+- slug: nubank
+  name: Nubank
+  group: tech-brasil
+  about: |
+    Processo com triagem, entrevista técnica e conversa com o time.
+  careers: ["https://jobs.ashbyhq.com/nubank", "https://nubank.com.br/carreiras"]
+- { slug: google, name: Google, group: big-tech }

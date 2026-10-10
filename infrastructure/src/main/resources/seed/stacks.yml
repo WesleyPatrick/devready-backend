@@ -1,0 +1,8 @@
+- { slug: java-spring, name: Java e Spring, area: backend }
+- { slug: node, name: Node.js, area: backend }
+- { slug: python, name: Python, area: backend }
+- { slug: dotnet, name: .NET e C#, area: backend }
+- { slug: go, name: Go, area: backend }
+- { slug: react, name: React, area: frontend }
+- { slug: angular-vue, name: Angular ou Vue, area: frontend }
+- { slug: kubernetes-cloud, name: Kubernetes e nuvem, area: devops }

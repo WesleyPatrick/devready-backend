@@ -1,0 +1,9 @@
+company: nubank
+tracks:
+  - area: backend
+    stack: todas
+    seniority: todas
+    jobs: 17
+    units:
+      - { competency: sql-e-modelagem-de-dados, weight: 0.41, requirement: obrigatoria, jobs: 7 }
+      - { competency: ingles, weight: 0.59, requirement: obrigatoria, jobs: 10 }

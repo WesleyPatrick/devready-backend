@@ -1,0 +1,38 @@
+- { slug: http, name: HTTP }
+- { slug: rest, name: REST }
+- { slug: sql, name: SQL }
+- { slug: banco-de-dados, name: Banco de dados }
+- { slug: java, name: Java }
+- { slug: spring, name: Spring }
+- { slug: orm, name: ORM }
+- { slug: seguranca, name: Segurança }
+- { slug: autenticacao, name: Autenticação }
+- { slug: cache, name: Cache }
+- { slug: mensageria, name: Mensageria }
+- { slug: testes, name: Testes }
+- { slug: arquitetura, name: Arquitetura }
+- { slug: git, name: Git }
+- { slug: estruturas-de-dados, name: Estruturas de dados }
+- { slug: algoritmos, name: Algoritmos }
+- { slug: arrays, name: Arrays }
+- { slug: strings, name: Strings }
+- { slug: hash-map, name: Hash map }
+- { slug: recursao, name: Recursão }
+- { slug: complexidade, name: Complexidade }
+- { slug: javascript, name: JavaScript }
+- { slug: typescript, name: TypeScript }
+- { slug: html, name: HTML }
+- { slug: css, name: CSS }
+- { slug: react, name: React }
+- { slug: dom, name: DOM }
+- { slug: acessibilidade, name: Acessibilidade }
+- { slug: performance-web, name: Performance web }
+- { slug: linux, name: Linux }
+- { slug: shell, name: Shell }
+- { slug: docker, name: Docker }
+- { slug: kubernetes, name: Kubernetes }
+- { slug: ci-cd, name: CI/CD }
+- { slug: redes, name: Redes }
+- { slug: observabilidade, name: Observabilidade }
+- { slug: nuvem, name: Nuvem }
+- { slug: infraestrutura-como-codigo, name: Infraestrutura como código }

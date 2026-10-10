@@ -1,0 +1,104 @@
+slug: class-names-merge
+title: Montar o atributo class sem repetição
+area: frontend
+level: pleno
+difficulty: medium
+tags: [strings, hash-map, css]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Ao montar o atributo `class` de um componente, é comum juntar pedaços condicionais, no estilo de bibliotecas como `clsx` ou `classnames` (que não removem repetidas), e aqui você também quer evitar que uma classe apareça duas vezes. Você recebe uma lista de pedaços de texto e, em paralelo, uma lista de booleanos dizendo se cada pedaço está ativo.
+
+  Regras:
+  - Só os pedaços ativos entram. Cada pedaço pode ter várias classes separadas por qualquer quantidade de espaços (só o caractere espaço; não há tabulação nem quebra de linha), ter espaços nas pontas ou ser vazio.
+  - Se uma classe aparece mais de uma vez, vale a **última** ocorrência: ela some das posições anteriores e fica na posição da última vez que apareceu.
+  - Devolva as classes que sobraram, na ordem, separadas por um único espaço. Sem classes, devolva o texto vazio.
+  - As duas listas têm o mesmo tamanho.
+
+  Exemplo: os pedaços `["btn primary", "btn-lg", "btn"]`, todos ativos, produzem `"primary btn-lg btn"`.
+approachSummary: |
+  Percorra os pedaços ativos, quebre cada um em classes (ignorando espaços repetidos e pedaços vazios) e use um mapa que preserva a ordem de inserção: ao ver uma classe, remova-a do mapa se já estiver lá e insira de novo, o que a leva para o fim. No final, as chaves do mapa, na ordem, são o resultado, e basta juntá-las com um espaço. Outra forma é gravar o último índice de cada classe e filtrar a lista na segunda passada. Custo O(n) no total de caracteres, com memória proporcional às classes distintas.
+languages:
+  java:
+    functionName: mergeClassNames
+    starterCode: |
+      class Solution {
+          public String mergeClassNames(String[] parts, boolean[] enabled) {
+              // sua solução
+              return "";
+          }
+      }
+    referenceSolution: |
+      import java.util.LinkedHashSet;
+      import java.util.Set;
+
+      class Solution {
+          public String mergeClassNames(String[] parts, boolean[] enabled) {
+              Set<String> classes = new LinkedHashSet<>();
+              for (int i = 0; i < parts.length; i++) {
+                  if (!enabled[i]) {
+                      continue;
+                  }
+                  for (String name : parts[i].trim().split("\\s+")) {
+                      if (name.isEmpty()) {
+                          continue;
+                      }
+                      classes.remove(name);
+                      classes.add(name);
+                  }
+              }
+              return String.join(" ", classes);
+          }
+      }
+  python:
+    functionName: merge_class_names
+    starterCode: |
+      class Solution:
+          def merge_class_names(self, parts, enabled):
+              # sua solução
+              return ""
+    referenceSolution: |
+      class Solution:
+          def merge_class_names(self, parts, enabled):
+              classes = {}
+              for part, active in zip(parts, enabled):
+                  if not active:
+                      continue
+                  for name in part.split():
+                      classes.pop(name, None)
+                      classes[name] = True
+              return " ".join(classes)
+  javascript:
+    functionName: mergeClassNames
+    starterCode: |
+      class Solution {
+        mergeClassNames(parts, enabled) {
+          // sua solução
+          return "";
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        mergeClassNames(parts, enabled) {
+          const classes = new Set();
+          parts.forEach((part, i) => {
+            if (!enabled[i]) return;
+            for (const name of part.split(/\s+/)) {
+              if (name === "") continue;
+              classes.delete(name);
+              classes.add(name);
+            }
+          });
+          return Array.from(classes).join(" ");
+        }
+      }
+testCases:
+  - { args: [["btn", "primary", "btn"], [true, true, true]], expected: "primary btn", visible: true }
+  - { args: [["btn primary", "btn-lg", "active"], [true, false, true]], expected: "btn primary active", visible: true }
+  - { args: [[], []], expected: "", visible: false }
+  - { args: [["a"], [false]], expected: "", visible: false }
+  - { args: [["  p-2   m-1 ", "m-1 p-4", "p-2"], [true, true, true]], expected: "m-1 p-4 p-2", visible: false }
+  - { args: [["x x x"], [true]], expected: "x", visible: false }
+  - { args: [["a b", "c a", "b d"], [true, true, false]], expected: "b c a", visible: false }
+  - { args: [["a", "", "  ", "b"], [true, true, true, true]], expected: "a b", visible: false }

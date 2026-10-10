@@ -1,0 +1,182 @@
+area: backend
+level: senior
+questions:
+  - slug: backend-senior-outbox-pattern
+    title: "Pedido gravado e evento que nunca chega"
+    difficulty: easy
+    statement: |
+      Um serviço grava o pedido no banco e, logo depois do commit, publica o evento `PedidoCriado` no broker. De vez em quando o pedido existe, mas o evento nunca chega aos outros serviços. Qual desenho resolve isso?
+    options:
+      - text: Publicar o evento no broker antes do commit, para ele sair mesmo se a gravação demorar
+      - text: Usar uma transação distribuída (2PC) que confirme o banco e o broker ao mesmo tempo
+      - text: Gravar o evento numa tabela de outbox na mesma transação e publicá-lo por um relay
+        correct: true
+      - text: Retentar a publicação em memória, com recuo, até o broker confirmar o recebimento
+    explanation: |
+      Gravar no banco e publicar no broker são duas escritas sem transação comum: se o processo cai entre o commit e a publicação, o pedido fica gravado e o evento some. Com o outbox, o evento vira uma linha gravada na mesma transação do pedido, e um relay a publica depois; se o relay falhar, a linha continua pendente e é publicada de novo (por isso o consumidor ainda precisa ser idempotente). Publicar antes do commit inverte o defeito, porque o evento sai e a gravação pode falhar. O 2PC entre banco e broker é pesado, prende a disponibilidade de um à do outro e muitos brokers nem o oferecem. Retentar em memória não sobrevive à queda do processo, que é justamente o caso em que o evento se perde.
+    tags: [mensageria, arquitetura]
+
+  - slug: backend-senior-retry-backoff-jitter
+    title: "Retentativas que derrubam o serviço"
+    difficulty: medium
+    statement: |
+      Um serviço de pagamentos ficou lento por alguns segundos. Seus 200 clientes retentavam três vezes, com recuo exponencial, mas todos nos mesmos instantes depois de cada falha. O serviço não se recuperou nem depois que o problema original passou: ondas de retentativas mantiveram a carga alta. Qual ajuste mais ataca a causa?
+    options:
+      - text: Acrescentar jitter ao recuo, para dessincronizar os clientes, e manter o limite de tentativas
+        correct: true
+      - text: Aumentar o número de retentativas para dar mais chance de sucesso a cada chamada
+      - text: Dobrar o intervalo base do recuo exponencial, mantendo todos os clientes alinhados
+      - text: Reduzir o timeout dos clientes para que desistam mais rápido e tentem de novo logo
+    explanation: |
+      O recuo exponencial sozinho espaça as tentativas de cada cliente, mas, se todos começam juntos, as ondas continuam sincronizadas e chegam em picos. O jitter aleatório espalha as tentativas no tempo, e o limite impede a amplificação. Mais tentativas aumenta a pressão sobre um serviço fraco. Dobrar o intervalo base diminui a frequência das ondas, mas mantém os picos. Timeout menor com retentativa logo em seguida gera mais requisições no mesmo período.
+    tags: [arquitetura]
+
+  - slug: backend-senior-circuit-breaker-flapping
+    title: "Circuit breaker que abre e fecha sem parar"
+    difficulty: medium
+    statement: |
+      Um circuit breaker abre quando 5 falhas seguidas acontecem. Num serviço de pouco tráfego de madrugada, ele abre por causa de 5 timeouts isolados, fecha logo em seguida e volta a abrir, cortando chamadas que teriam dado certo. Qual ajuste de configuração é o mais apropriado?
+    options:
+      - text: Deixar o breaker aberto por um tempo bem mais longo, para que ele não oscile
+      - text: Contar só respostas 5xx como falha, ignorando os timeouts do cliente
+      - text: Desligar o breaker no período de pouco tráfego e religar de manhã
+      - text: Avaliar a taxa de falhas numa janela, exigindo um volume mínimo de chamadas
+        correct: true
+    explanation: |
+      Contar falhas absolutas seguidas faz um punhado de erros ao acaso, em pouco tráfego, parecer uma dependência doente. Avaliar a taxa numa janela, só depois de um volume mínimo de chamadas, separa o problema real do ruído estatístico. Esperar mais tempo aberto reduz a oscilação, mas corta ainda mais chamadas boas e não corrige o critério. Ignorar timeouts tira do breaker justamente o sinal mais comum de lentidão. Desligar na madrugada deixa o serviço desprotegido se a dependência cair de verdade.
+    tags: [arquitetura]
+
+  - slug: backend-senior-trace-context-queue
+    title: "Traço que se parte na fila"
+    difficulty: medium
+    statement: |
+      Uma requisição HTTP gera um traço distribuído e, no meio do caminho, publica uma mensagem numa fila. O consumidor processa a mensagem e, na ferramenta de traços, aparece como um traço novo, separado, sem ligação com a requisição original. O que corrige isso?
+    options:
+      - text: Gerar o id do traço no consumidor a partir do id da mensagem do broker
+      - text: Injetar o contexto do traço nos cabeçalhos da mensagem e extraí-lo no consumidor
+        correct: true
+      - text: Registrar o id do traço só nos logs do produtor e juntar as partes pelo horário
+      - text: Aceitar a separação, pois filas são fora do escopo de traços e basta ter métricas
+    explanation: |
+      O traço só atravessa um limite de processo se o contexto (ids de traço e de span) viajar junto: o produtor o grava nos cabeçalhos da mensagem e o consumidor o lê e cria seu span como filho, ou ligado, ao original. Derivar o id do traço do id do broker gera ids que não casam com os do produtor. Juntar por horário é frágil, impreciso sob concorrência e não aparece como traço na ferramenta. Dizer que filas ficam fora do escopo abandona justamente os fluxos assíncronos em que o diagnóstico é mais difícil.
+    tags: [observabilidade]
+
+  - slug: backend-senior-backfill-in-batches
+    title: "Preencher coluna nova sem travar a tabela"
+    difficulty: medium
+    statement: |
+      Uma tabela de 200 milhões de linhas ganhou uma coluna nova que precisa ser preenchida a partir de dados existentes, sem tirar o serviço do ar. A equipe discute como rodar o preenchimento. Qual abordagem preserva a disponibilidade do serviço?
+    options:
+      - text: Fazer lotes pequenos por faixa de chave primária, com transações curtas e pausas
+        correct: true
+      - text: Rodar um único `UPDATE` na tabela inteira, fora do horário de pico
+      - text: Bloquear escritas na tabela durante o preenchimento, para evitar inconsistência
+      - text: Rodar um único `UPDATE` dentro de uma transação, para garantir atomicidade
+    explanation: |
+      Lotes por faixa de chave mantêm as transações curtas: os bloqueios duram pouco, o log de transações não incha, a replicação acompanha e o preenchimento pode ser pausado ou retomado. Um único UPDATE na tabela inteira, mesmo à noite, segura bloqueios por muito tempo, gera um log enorme e atrasa as réplicas; se falhar no fim, desfaz tudo. Bloquear escritas é indisponibilidade parcial, que o enunciado proíbe. A atomicidade de uma transação gigante não é necessária, porque o preenchimento pode ser repetido com segurança.
+    tags: [banco-de-dados, arquitetura]
+
+  - slug: backend-senior-metric-cardinality
+    title: "Métricas que estouram o armazenamento"
+    difficulty: medium
+    statement: |
+      Depois de adicionar o rótulo `user_id` a uma métrica de latência HTTP, o custo e a memória do sistema de métricas dispararam, e as consultas ficaram lentas. Qual é a causa mais provável e o ajuste correto?
+    options:
+      - text: O volume de requisições cresceu; é preciso aumentar a retenção e a capacidade do sistema
+      - text: O rótulo cria uma série por usuário; use rótulos limitados e deixe o detalhe para logs e traços
+        correct: true
+      - text: Há pontos demais por série; basta coletar a métrica com menos frequência
+      - text: O histograma tem buckets demais; basta trocá-lo por uma média simples
+    explanation: |
+      Cada combinação de valores de rótulos cria uma série temporal. Com milhões de usuários, a métrica vira milhões de séries, o que consome memória e deixa as consultas lentas. Rótulos devem ter cardinalidade limitada (rota, método, status); o detalhe por usuário pertence a logs e traços. Coletar com menos frequência reduz os pontos por série, mas não o número de séries, que é o custo dominante. Mais capacidade só adia o estouro. Trocar o histograma por média esconde a cauda de latência sem tocar no rótulo.
+    tags: [observabilidade]
+
+  - slug: backend-senior-saga-compensation-retry
+    title: "Estorno que falha dentro da saga"
+    difficulty: hard
+    statement: |
+      Num fluxo de compra distribuído, o serviço de entrega recusou o pedido depois de o pagamento ser aprovado e o estoque ser reservado. A saga disparou as compensações, mas o estorno do pagamento falhou, porque o provedor ficou fora do ar por alguns minutos. O estoque já foi liberado. Como a saga deve tratar a falha do estorno?
+    options:
+      - text: Desfazer a liberação do estoque, para que o estado fique igual ao do pagamento
+      - text: Marcar o pedido como cancelado e seguir, deixando o estorno para o suporte
+      - text: Retentar a compensação idempotente até concluir, com alerta e intervenção manual se esgotar
+        correct: true
+      - text: Retentar poucas vezes e, se continuar falhando, dar a saga por encerrada com erro no log
+    explanation: |
+      Uma compensação não pode ser abandonada: o cliente está cobrado sem produto. Como é uma operação de negócio idempotente, pode ser retentada com recuo até concluir, e só quando o limite se esgota deve gerar alerta e tratamento manual, com o estado da saga ainda visível. Desfazer a liberação do estoque reabre uma reserva de um pedido recusado. Cancelar e empurrar para o suporte transforma uma falha temporária em trabalho manual rotineiro. Encerrar com erro só no log perde o rastreio da dívida com o cliente.
+    tags: [arquitetura, mensageria]
+
+  - slug: backend-senior-partition-key-hot
+    title: "Chave de partição de um tópico de pedidos"
+    difficulty: hard
+    statement: |
+      Um tópico de mensagens de pedidos precisa preservar a ordem dos eventos de cada pedido e escalar com vários consumidores. Um grande cliente corporativo responde por 40% do tráfego. Qual escolha de chave de partição atende melhor aos dois requisitos?
+    options:
+      - text: O id do cliente, porque agrupa tudo do mesmo cliente na mesma partição
+      - text: Uma chave aleatória por mensagem, para distribuir a carga por igual entre as partições
+      - text: Uma única partição, porque só ela garante ordem total entre todos os eventos
+      - text: O id do pedido, que preserva a ordem de cada pedido e espalha o cliente grande
+        correct: true
+    explanation: |
+      A ordem só é garantida dentro de uma partição, e o que se precisa ordenar são os eventos de um mesmo pedido, não de um cliente inteiro. Com o id do pedido como chave, os eventos de cada pedido ficam juntos e a carga do cliente grande se espalha. O id do cliente criaria uma partição quente com 40% do tráfego. A chave aleatória distribui bem, mas perde a ordem por pedido. Uma partição única dá ordem total, mas elimina o paralelismo e o escalonamento.
+    tags: [mensageria, arquitetura]
+
+  - slug: backend-senior-read-your-writes
+    title: "Leitura desatualizada após gravar"
+    difficulty: hard
+    statement: |
+      Uma API grava no primário do banco e lê de réplicas assíncronas. Logo depois de editar o perfil, o usuário vê o valor antigo por alguns instantes. O requisito é que cada pessoa veja a própria edição, e o time quer o menor custo possível. O que resolve?
+    options:
+      - text: Para o autor, ler do primário por pouco tempo depois da escrita
+        correct: true
+      - text: Tornar a replicação síncrona em todas as réplicas, para toda leitura ver a última escrita
+      - text: Aumentar o número de réplicas para que a replicação termine mais rápido para todos
+      - text: Passar a ler tudo do primário e descartar as réplicas de leitura que existem hoje
+    explanation: |
+      A garantia necessária é ler o que você mesmo escreveu, e não consistência forte para todos. Direcionar as leituras do autor ao primário por uma janela curta, ou a uma réplica que já alcançou a versão gravada, resolve o caso e mantém o ganho de escala. Replicação síncrona em todas as réplicas resolve, mas encarece cada escrita e reduz a disponibilidade, e o requisito não pede isso. Mais réplicas não reduzem o atraso de replicação de cada uma. Ler tudo do primário elimina o motivo de ter réplicas.
+    tags: [banco-de-dados, arquitetura]
+
+  - slug: backend-senior-retry-amplification
+    title: "Retentativas em camadas empilhadas"
+    difficulty: hard
+    statement: |
+      Uma requisição passa por gateway, serviço A, serviço B e banco. Cada camada tem até 3 tentativas contra a seguinte. Quando o banco degrada, o tráfego que chega a ele é muito maior que o tráfego original. Qual correção ataca a causa?
+    options:
+      - text: Manter a retentativa em todas as camadas, com recuo exponencial e jitter em cada uma
+      - text: Retentar só numa camada, com orçamento de retentativas e prazo propagado
+        correct: true
+      - text: Aumentar a capacidade do banco para absorver todo o tráfego extra de retentativas
+      - text: Pôr cache no gateway, de modo que nenhuma camada precise retentar uma chamada ao banco
+    explanation: |
+      Com tentativas em cada camada, uma falha no fundo se multiplica pelo número de camadas (até 3 vezes 3 vezes 3), o que transforma lentidão em colapso. A prática é concentrar a retentativa numa camada, limitá-la por um orçamento (uma fração do tráfego) e propagar o prazo restante para que ninguém trabalhe numa requisição já expirada. Recuo e jitter em cada camada espalham as tentativas no tempo, mas não desfazem a multiplicação. Mais capacidade esconde o problema até a próxima degradação. Cache ajuda a reduzir carga, mas não cobre operações que não podem ser guardadas em cache.
+    tags: [arquitetura]
+
+  - slug: backend-senior-jwt-revocation
+    title: "Revogar acesso com tokens JWT"
+    difficulty: hard
+    statement: |
+      A API usa JWTs de acesso com validade de 24 horas, verificados só pela assinatura, sem consulta ao servidor de autenticação. Uma conta foi comprometida e precisa perder o acesso agora. Qual desenho permite revogar acessos assim, com bom equilíbrio entre segurança e desempenho?
+    options:
+      - text: Consultar o banco de usuários em toda requisição e abandonar os tokens assinados
+      - text: Reduzir a validade do token de acesso para 15 minutos, sem refresh token, e pedir novo login
+      - text: Trocar a chave de assinatura a cada conta comprometida, derrubando todos os usuários logados
+      - text: Acesso curto, refresh token revogável e lista de bloqueio em cache para casos críticos
+        correct: true
+    explanation: |
+      Tokens assinados valem até expirar, então a defesa combina pouco tempo de exposição, um refresh token que o servidor pode revogar e, para os casos críticos, uma lista de bloqueio pequena em cache, com custo baixo por requisição. Só encurtar a validade limita a exposição, mas não revoga: por 15 minutos o atacante ainda entra, e o usuário legítimo precisa fazer login a toda hora. Consultar o banco em toda chamada devolve o custo e o acoplamento que o token tentava evitar. Trocar a chave derruba todos os usuários por causa de uma conta.
+    tags: [seguranca, autenticacao]
+
+  - slug: backend-senior-bulkhead-isolation
+    title: "Dependência lenta derruba o serviço todo"
+    difficulty: hard
+    statement: |
+      Um serviço chama três dependências com o mesmo pool de threads. Quando uma delas (relatórios) fica lenta, as threads se esgotam e as rotas que não dependem dela também deixam de responder. Qual medida ataca esse acoplamento de falha?
+    options:
+      - text: Aumentar o tamanho do pool compartilhado para aguentar a lentidão da dependência
+      - text: Aumentar o timeout das chamadas para dar tempo de a dependência lenta responder
+      - text: Isolar cada dependência em seu próprio pool (bulkhead), com timeouts curtos
+        correct: true
+      - text: Colocar um cache na frente do serviço de relatórios, para reduzir as chamadas a ele
+    explanation: |
+      O bulkhead limita quanto de recurso cada dependência pode consumir, de modo que a lentidão de uma fique contida e as outras rotas continuem atendendo. Combinado a timeouts curtos, evita que chamadas lentas ocupem threads por muito tempo. Um pool maior só adia o esgotamento, pois o problema é o compartilhamento. Timeouts maiores prendem as threads por mais tempo e pioram o quadro. O cache ajuda quando os dados podem ser reaproveitados, mas não protege contra a próxima dependência lenta.
+    tags: [arquitetura]

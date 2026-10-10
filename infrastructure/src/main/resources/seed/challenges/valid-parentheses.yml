@@ -1,0 +1,100 @@
+slug: valid-parentheses
+title: Parênteses balanceados
+area: backend
+level: junior
+difficulty: easy
+tags: [estruturas-de-dados, strings, algoritmos]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dada uma string `s` formada apenas pelos caracteres `(`, `)`, `[`, `]`, `{` e `}`, diga se ela está balanceada.
+
+  Uma string está balanceada quando todo símbolo de abertura é fechado pelo símbolo do mesmo tipo e na ordem correta: o último aberto é o primeiro a ser fechado. A string vazia está balanceada.
+
+  Exemplo: `"{[]}"` está balanceada e devolve `true`; `"([)]"` não está, porque o `[` é fechado depois do `)`, e devolve `false`.
+approachSummary: |
+  Use uma pilha. Ao ler um símbolo de abertura, empilhe; ao ler um de fechamento, a pilha não pode estar vazia e o topo precisa ser a abertura correspondente, que é desempilhada. No fim, a string só é válida se a pilha estiver vazia. Uma passada, O(n) de tempo e O(n) de memória no pior caso. O erro comum é só contar aberturas e fechamentos, o que aceita `"([)]"`.
+languages:
+  java:
+    functionName: isValid
+    starterCode: |
+      class Solution {
+          public boolean isValid(String s) {
+              // sua solução
+              return false;
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayDeque;
+      import java.util.Deque;
+
+      class Solution {
+          public boolean isValid(String s) {
+              Deque<Character> stack = new ArrayDeque<>();
+              for (char c : s.toCharArray()) {
+                  if (c == '(' || c == '[' || c == '{') {
+                      stack.push(c);
+                      continue;
+                  }
+                  if (stack.isEmpty()) {
+                      return false;
+                  }
+                  char open = stack.pop();
+                  if ((c == ')' && open != '(') || (c == ']' && open != '[') || (c == '}' && open != '{')) {
+                      return false;
+                  }
+              }
+              return stack.isEmpty();
+          }
+      }
+  python:
+    functionName: is_valid
+    starterCode: |
+      class Solution:
+          def is_valid(self, s):
+              # sua solução
+              return False
+    referenceSolution: |
+      class Solution:
+          def is_valid(self, s):
+              pairs = {")": "(", "]": "[", "}": "{"}
+              stack = []
+              for c in s:
+                  if c in "([{":
+                      stack.append(c)
+                  elif not stack or stack.pop() != pairs[c]:
+                      return False
+              return not stack
+  javascript:
+    functionName: isValid
+    starterCode: |
+      class Solution {
+        isValid(s) {
+          // sua solução
+          return false;
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        isValid(s) {
+          const pairs = { ")": "(", "]": "[", "}": "{" };
+          const stack = [];
+          for (const c of s) {
+            if (c === "(" || c === "[" || c === "{") {
+              stack.push(c);
+            } else if (stack.length === 0 || stack.pop() !== pairs[c]) {
+              return false;
+            }
+          }
+          return stack.length === 0;
+        }
+      }
+testCases:
+  - { args: ["()[]{}"], expected: true, visible: true }
+  - { args: ["([)]"], expected: false, visible: true }
+  - { args: ["{[]}"], expected: true, visible: false }
+  - { args: [""], expected: true, visible: false }
+  - { args: ["(("], expected: false, visible: false }
+  - { args: ["]"], expected: false, visible: false }
+  - { args: ["(]"], expected: false, visible: false }

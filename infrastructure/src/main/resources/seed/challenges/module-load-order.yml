@@ -1,0 +1,160 @@
+slug: module-load-order
+title: Ordem de carga de módulos
+area: frontend
+level: senior
+difficulty: medium
+tags: [algoritmos, estruturas-de-dados, arquitetura]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Uma aplicação é dividida em módulos que se carregam uns aos outros. Dada a lista de nomes de `modules` e a lista `edges`, onde cada item `"a>b"` significa que o módulo `a` depende de `b` (portanto `b` precisa ser carregado antes de `a`), devolva uma ordem de carga válida.
+
+  Para a resposta ser única, sempre que mais de um módulo estiver pronto para carregar (todas as dependências já carregadas), escolha o de menor nome em ordem alfabética. Se houver um ciclo de dependências, devolva uma lista vazia. Dependências repetidas contam como uma só. Todo módulo citado em `edges` está em `modules`. Os nomes têm só letras minúsculas, dígitos e hífen e não contêm `>`; compare-os em ordem lexicográfica simples (por código de caractere).
+
+  Exemplo: `modules = ["app", "ui", "store", "api"]` e `edges = ["app>ui", "app>store", "ui>api", "store>api"]` produzem `["api", "store", "ui", "app"]`.
+approachSummary: |
+  É uma ordenação topológica (algoritmo de Kahn) com desempate pelo menor nome. Conte quantas dependências ainda faltam para cada módulo (ignorando arestas repetidas) e guarde, para cada módulo, quem depende dele. Mantenha o conjunto de módulos prontos numa estrutura ordenada (fila de prioridade ou conjunto ordenado), retire sempre o menor, adicione-o à resposta e libere os dependentes cujo contador chegou a zero. Se no fim a resposta tiver menos módulos que a entrada, há ciclo e o resultado é vazio. Custo O((V + E) log V) com a fila de prioridade; escolher o menor por varredura linear também serve para entradas moderadas, em O(V² + E).
+languages:
+  java:
+    functionName: loadOrder
+    starterCode: |
+      class Solution {
+          public String[] loadOrder(String[] modules, String[] edges) {
+              // sua solução
+              return new String[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.HashMap;
+      import java.util.HashSet;
+      import java.util.List;
+      import java.util.Map;
+      import java.util.PriorityQueue;
+      import java.util.Set;
+
+      class Solution {
+          public String[] loadOrder(String[] modules, String[] edges) {
+              Map<String, Integer> missing = new HashMap<>();
+              Map<String, List<String>> dependents = new HashMap<>();
+              for (String m : modules) {
+                  missing.put(m, 0);
+                  dependents.put(m, new ArrayList<>());
+              }
+              Set<String> seen = new HashSet<>();
+              for (String edge : edges) {
+                  if (!seen.add(edge)) {
+                      continue;
+                  }
+                  int cut = edge.indexOf('>');
+                  String from = edge.substring(0, cut);
+                  String to = edge.substring(cut + 1);
+                  missing.put(from, missing.get(from) + 1);
+                  dependents.get(to).add(from);
+              }
+              PriorityQueue<String> ready = new PriorityQueue<>();
+              for (String m : modules) {
+                  if (missing.get(m) == 0) {
+                      ready.add(m);
+                  }
+              }
+              List<String> order = new ArrayList<>();
+              while (!ready.isEmpty()) {
+                  String next = ready.poll();
+                  order.add(next);
+                  for (String dep : dependents.get(next)) {
+                      int left = missing.get(dep) - 1;
+                      missing.put(dep, left);
+                      if (left == 0) {
+                          ready.add(dep);
+                      }
+                  }
+              }
+              if (order.size() != modules.length) {
+                  return new String[0];
+              }
+              return order.toArray(new String[0]);
+          }
+      }
+  python:
+    functionName: load_order
+    starterCode: |
+      class Solution:
+          def load_order(self, modules, edges):
+              # sua solução
+              return []
+    referenceSolution: |
+      import heapq
+
+
+      class Solution:
+          def load_order(self, modules, edges):
+              missing = {m: 0 for m in modules}
+              dependents = {m: [] for m in modules}
+              for edge in set(edges):
+                  frm, to = edge.split(">")
+                  missing[frm] += 1
+                  dependents[to].append(frm)
+              ready = [m for m in modules if missing[m] == 0]
+              heapq.heapify(ready)
+              order = []
+              while ready:
+                  nxt = heapq.heappop(ready)
+                  order.append(nxt)
+                  for dep in dependents[nxt]:
+                      missing[dep] -= 1
+                      if missing[dep] == 0:
+                          heapq.heappush(ready, dep)
+              return order if len(order) == len(modules) else []
+  javascript:
+    functionName: loadOrder
+    starterCode: |
+      class Solution {
+        loadOrder(modules, edges) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        loadOrder(modules, edges) {
+          const missing = new Map();
+          const dependents = new Map();
+          for (const m of modules) {
+            missing.set(m, 0);
+            dependents.set(m, []);
+          }
+          for (const edge of new Set(edges)) {
+            const cut = edge.indexOf(">");
+            const from = edge.slice(0, cut);
+            const to = edge.slice(cut + 1);
+            missing.set(from, missing.get(from) + 1);
+            dependents.get(to).push(from);
+          }
+          const ready = modules.filter((m) => missing.get(m) === 0);
+          const order = [];
+          while (ready.length > 0) {
+            let best = 0;
+            for (let i = 1; i < ready.length; i++) {
+              if (ready[i] < ready[best]) best = i;
+            }
+            const next = ready.splice(best, 1)[0];
+            order.push(next);
+            for (const dep of dependents.get(next)) {
+              missing.set(dep, missing.get(dep) - 1);
+              if (missing.get(dep) === 0) ready.push(dep);
+            }
+          }
+          return order.length === modules.length ? order : [];
+        }
+      }
+testCases:
+  - { args: [["app", "ui", "store", "api"], ["app>ui", "app>store", "ui>api", "store>api"]], expected: ["api", "store", "ui", "app"], visible: true }
+  - { args: [["c", "b", "a"], []], expected: ["a", "b", "c"], visible: true }
+  - { args: [["a", "b", "c"], ["a>b", "b>c", "c>a"]], expected: [], visible: true }
+  - { args: [[], []], expected: [], visible: false }
+  - { args: [["solo"], []], expected: ["solo"], visible: false }
+  - { args: [["x", "y", "z", "w"], ["x>y", "w>z"]], expected: ["y", "x", "z", "w"], visible: false }
+  - { args: [["a", "b", "c", "d"], ["b>a", "c>d", "d>c"]], expected: [], visible: false }
+  - { args: [["m", "n"], ["m>n", "m>n"]], expected: ["n", "m"], visible: false }

@@ -1,0 +1,16 @@
+area: backend
+level: junior
+questions:
+  - slug: backend-junior-http-idempotency
+    title: "Idempotência dos métodos HTTP"
+    difficulty: easy
+    statement: |
+      Qual método HTTP é idempotente por definição?
+    options:
+      - text: POST
+      - text: PUT
+        correct: true
+      - text: PATCH
+    explanation: |
+      PUT substitui o recurso inteiro; repetir a requisição produz o mesmo estado.
+    tags: [http]

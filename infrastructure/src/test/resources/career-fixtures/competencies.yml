@@ -1,0 +1,8 @@
+- slug: sql-e-modelagem-de-dados
+  name: SQL e modelagem de dados
+  category: fundamento
+  difficulty: medium
+  summary: |
+    Consultas, índices e modelagem.
+  tags: [sql]
+- { slug: ingles, name: Inglês, category: comportamental, difficulty: medium }

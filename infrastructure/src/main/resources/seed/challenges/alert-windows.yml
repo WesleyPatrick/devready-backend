@@ -1,0 +1,166 @@
+slug: alert-windows
+title: Alertas por janela deslizante de erros
+area: devops
+level: senior
+difficulty: hard
+tags: [observabilidade, algoritmos, hash-map]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe as linhas de log de vários serviços, já em ordem não decrescente de instante. Cada linha tem três campos separados por espaço: `instante serviço status`, em que o instante é sempre um inteiro em segundos (só dígitos) e o status é `ERROR` ou `OK`. Linhas que não tenham exatamente esses três campos devem ser ignoradas. Limites: até 10^5 linhas, instantes entre 0 e 10^9, `1 <= window <= 10^9`, `limit >= 0`, e nomes de serviço com letras minúsculas, dígitos e hífen.
+
+  As linhas são processadas uma a uma, na ordem recebida (várias linhas podem ter o mesmo instante). A cada linha de um serviço, calcule `N`: o número de linhas `ERROR` desse serviço **lidas até esta linha, inclusive**, com instante `t'` tal que `t - window < t' <= t`, em que `t` é o instante da linha. O serviço está acima do limite quando `N > limit`.
+
+  Devolva um alerta `"serviço instante"` cada vez que um serviço passa a ficar acima do limite, isto é, quando, na avaliação de uma linha dele, `N > limit` e na avaliação anterior desse mesmo serviço `N <= limit` (ou não havia avaliação anterior). Enquanto o serviço continuar acima, não repita o alerta. Todas as linhas do serviço, inclusive as `OK`, são avaliações: uma linha `OK` é o único momento em que o serviço é reavaliado sem erro novo (por exemplo, para constatar que a janela esvaziou), e um serviço sem linhas não é reavaliado. A lista final vem ordenada por instante e, em empate, pelo nome do serviço.
+
+  Exemplo: com `limit = 2`, `window = 10` e as linhas `1 api ERROR`, `2 api ERROR`, `3 api ERROR`, `4 api ERROR`, a resposta é `["api 3"]`. Com `limit = 0`, `window = 1` e as linhas `1 a ERROR`, `2 a OK`, `3 a ERROR`, a resposta é `["a 1", "a 3"]`: a linha `OK` do instante 2 reavalia o serviço (N = 0) e libera um novo alerta.
+approachSummary: |
+  Mantenha, por serviço, uma fila com os instantes dos erros dentro da janela e um indicador de "acima do limite". A cada linha do serviço, descarte da frente os instantes que saíram da janela (`<= t - window`), acrescente o atual se for erro, e compare o tamanho da fila com o limite: se passou a ficar acima e antes não estava, emita o alerta; se voltou a ficar igual ou abaixo, desligue o indicador. Cada instante entra e sai da fila uma vez, então o custo é O(n) amortizado, mais a ordenação final da saída. Os erros comuns são contar a borda da janela (usar `>=` no lugar de `>`), repetir o alerta enquanto continua acima e misturar a contagem entre serviços.
+languages:
+  java:
+    functionName: alertWindows
+    starterCode: |
+      class Solution {
+          public String[] alertWindows(String[] lines, int limit, int window) {
+              // sua solução
+              return new String[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayDeque;
+      import java.util.ArrayList;
+      import java.util.Collections;
+      import java.util.Deque;
+      import java.util.HashMap;
+      import java.util.List;
+      import java.util.Map;
+
+      class Solution {
+          public String[] alertWindows(String[] lines, int limit, int window) {
+              Map<String, Deque<Integer>> errors = new HashMap<>();
+              Map<String, Boolean> above = new HashMap<>();
+              List<Object[]> alerts = new ArrayList<>();
+              for (String line : lines) {
+                  if (line == null) continue;
+                  String[] parts = line.trim().split("\\s+");
+                  if (parts.length != 3) continue;
+                  int t;
+                  try {
+                      t = Integer.parseInt(parts[0]);
+                  } catch (NumberFormatException e) {
+                      continue;
+                  }
+                  String service = parts[1];
+                  Deque<Integer> queue = errors.computeIfAbsent(service, k -> new ArrayDeque<>());
+                  while (!queue.isEmpty() && queue.peekFirst() <= t - window) {
+                      queue.pollFirst();
+                  }
+                  if (parts[2].equals("ERROR")) {
+                      queue.addLast(t);
+                  }
+                  boolean nowAbove = queue.size() > limit;
+                  boolean wasAbove = above.getOrDefault(service, false);
+                  if (nowAbove && !wasAbove) {
+                      alerts.add(new Object[]{t, service});
+                  }
+                  above.put(service, nowAbove);
+              }
+              Collections.sort(
+                      alerts,
+                      (a, b) -> {
+                          int byTime = Integer.compare((Integer) a[0], (Integer) b[0]);
+                          if (byTime != 0) return byTime;
+                          return ((String) a[1]).compareTo((String) b[1]);
+                      });
+              String[] result = new String[alerts.size()];
+              for (int i = 0; i < result.length; i++) {
+                  result[i] = alerts.get(i)[1] + " " + alerts.get(i)[0];
+              }
+              return result;
+          }
+      }
+  python:
+    functionName: alert_windows
+    starterCode: |
+      class Solution:
+          def alert_windows(self, lines, limit, window):
+              # sua solução
+              return []
+    referenceSolution: |
+      from collections import deque
+
+
+      class Solution:
+          def alert_windows(self, lines, limit, window):
+              errors = {}
+              above = {}
+              alerts = []
+              for line in lines:
+                  parts = line.split()
+                  if len(parts) != 3:
+                      continue
+                  try:
+                      t = int(parts[0])
+                  except ValueError:
+                      continue
+                  service = parts[1]
+                  queue = errors.setdefault(service, deque())
+                  while queue and queue[0] <= t - window:
+                      queue.popleft()
+                  if parts[2] == "ERROR":
+                      queue.append(t)
+                  now_above = len(queue) > limit
+                  if now_above and not above.get(service, False):
+                      alerts.append((t, service))
+                  above[service] = now_above
+              alerts.sort()
+              return [service + " " + str(t) for t, service in alerts]
+  javascript:
+    functionName: alertWindows
+    starterCode: |
+      class Solution {
+        alertWindows(lines, limit, window) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        alertWindows(lines, limit, window) {
+          const errors = new Map();
+          const above = new Map();
+          const alerts = [];
+          for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length !== 3) continue;
+            const t = Number(parts[0]);
+            if (!Number.isInteger(t)) continue;
+            const service = parts[1];
+            if (!errors.has(service)) errors.set(service, []);
+            const queue = errors.get(service);
+            let head = 0;
+            while (head < queue.length && queue[head] <= t - window) head++;
+            if (head > 0) queue.splice(0, head);
+            if (parts[2] === "ERROR") queue.push(t);
+            const nowAbove = queue.length > limit;
+            if (nowAbove && !above.get(service)) alerts.push([t, service]);
+            above.set(service, nowAbove);
+          }
+          alerts.sort((a, b) => {
+            if (a[0] !== b[0]) return a[0] - b[0];
+            if (a[1] < b[1]) return -1;
+            return a[1] > b[1] ? 1 : 0;
+          });
+          return alerts.map((a) => a[1] + " " + a[0]);
+        }
+      }
+testCases:
+  - { args: [["1 api ERROR", "2 api ERROR", "3 api ERROR", "4 api ERROR"], 2, 10], expected: ["api 3"], visible: true }
+  - { args: [["1 a ERROR", "2 a OK", "3 a ERROR"], 0, 1], expected: ["a 1", "a 3"], visible: true }
+  - { args: [["1 api ERROR", "2 api ERROR", "3 api ERROR", "20 api OK", "21 api ERROR", "22 api ERROR", "23 api ERROR"], 2, 5], expected: ["api 3", "api 23"], visible: false }
+  - { args: [[], 1, 10], expected: [], visible: false }
+  - { args: [["5 db ERROR", "5 api ERROR", "6 db ERROR", "6 api ERROR"], 1, 10], expected: ["api 6", "db 6"], visible: false }
+  - { args: [["1 api ERROR", "2 api ERROR", "6 api ERROR"], 2, 5], expected: [], visible: false }
+  - { args: [["1 a ERROR", "2 b ERROR", "3 a OK", "bad line", "4 b ERROR", "5 a ERROR"], 1, 10], expected: ["b 4", "a 5"], visible: false }
+  - { args: [["1 a ERROR", "1 a ERROR", "3 a ERROR", "3 a ERROR"], 1, 2], expected: ["a 1", "a 3"], visible: false }

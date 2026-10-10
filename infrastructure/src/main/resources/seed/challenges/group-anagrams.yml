@@ -1,0 +1,102 @@
+slug: group-anagrams
+title: Agrupar anagramas
+area: frontend
+level: junior
+difficulty: medium
+tags: [strings, hash-map]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dada uma lista de palavras em letras minúsculas sem acento, agrupe as que são anagramas entre si, isto é, que usam exatamente as mesmas letras nas mesmas quantidades. Palavras repetidas ficam no mesmo grupo, uma vez para cada ocorrência.
+
+  Para a resposta ser única, ordene as palavras de cada grupo em ordem alfabética e ordene os grupos pela primeira palavra de cada um.
+
+  Exemplo: `["amor", "roma", "pato", "sol", "ramo", "topa", "mora"]` produz `[["amor", "mora", "ramo", "roma"], ["pato", "topa"], ["sol"]]`.
+approachSummary: |
+  Dois anagramas têm a mesma assinatura: as letras da palavra em ordem alfabética (`roma` e `amor` viram `amor`). Use um mapa de assinatura para lista de palavras, ordene cada lista e, por fim, ordene os grupos pela primeira palavra. Montar os grupos custa O(n · k log k) para n palavras de tamanho até k, e as ordenações finais O(n log n) comparações. Comparar todos os pares de palavras funciona, mas é O(n²).
+languages:
+  java:
+    functionName: groupAnagrams
+    starterCode: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<List<String>> groupAnagrams(String[] words) {
+              // sua solução
+              return new ArrayList<>();
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.Arrays;
+      import java.util.Collections;
+      import java.util.HashMap;
+      import java.util.List;
+      import java.util.Map;
+
+      class Solution {
+          public List<List<String>> groupAnagrams(String[] words) {
+              Map<String, List<String>> groups = new HashMap<>();
+              for (String word : words) {
+                  char[] letters = word.toCharArray();
+                  Arrays.sort(letters);
+                  groups.computeIfAbsent(new String(letters), k -> new ArrayList<>()).add(word);
+              }
+              List<List<String>> result = new ArrayList<>();
+              for (List<String> group : groups.values()) {
+                  Collections.sort(group);
+                  result.add(group);
+              }
+              result.sort((x, y) -> x.get(0).compareTo(y.get(0)));
+              return result;
+          }
+      }
+  python:
+    functionName: group_anagrams
+    starterCode: |
+      class Solution:
+          def group_anagrams(self, words):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def group_anagrams(self, words):
+              groups = {}
+              for word in words:
+                  key = "".join(sorted(word))
+                  groups.setdefault(key, []).append(word)
+              result = [sorted(group) for group in groups.values()]
+              result.sort(key=lambda group: group[0])
+              return result
+  javascript:
+    functionName: groupAnagrams
+    starterCode: |
+      class Solution {
+        groupAnagrams(words) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        groupAnagrams(words) {
+          const groups = new Map();
+          for (const word of words) {
+            const key = [...word].sort().join("");
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(word);
+          }
+          const result = [...groups.values()].map((group) => [...group].sort());
+          result.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+          return result;
+        }
+      }
+testCases:
+  - { args: [["amor", "roma", "pato", "sol", "ramo", "topa", "mora"]], expected: [["amor", "mora", "ramo", "roma"], ["pato", "topa"], ["sol"]], visible: true }
+  - { args: [["lata", "sal", "tala", "las", "ali"]], expected: [["ali"], ["las", "sal"], ["lata", "tala"]], visible: true }
+  - { args: [[]], expected: [], visible: false }
+  - { args: [["a"]], expected: [["a"]], visible: false }
+  - { args: [["abc", "bca", "abc"]], expected: [["abc", "abc", "bca"]], visible: false }
+  - { args: [["ba", "cab", "b", "ab", "abc"]], expected: [["ab", "ba"], ["abc", "cab"], ["b"]], visible: false }

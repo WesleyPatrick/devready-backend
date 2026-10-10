@@ -1,0 +1,235 @@
+area: devops
+level: junior
+questions:
+  - slug: devops-junior-linux-chmod
+    title: "Permissões do chmod 754"
+    difficulty: medium
+    statement: |
+      Depois de rodar `chmod 754 deploy.sh`, quais são as permissões do dono, do grupo e dos demais usuários sobre o arquivo?
+    options:
+      - text: Dono lê e escreve; grupo lê e executa; outros só executam
+      - text: Dono lê, escreve e executa; grupo lê e executa; outros só leem
+        correct: true
+      - text: Dono lê, escreve e executa; grupo lê e escreve; outros só leem
+      - text: Todos leem e executam; só o dono escreve
+    explanation: |
+      Cada dígito é a soma de leitura (4), escrita (2) e execução (1), na ordem dono, grupo, outros: 7 = rwx, 5 = r-x e 4 = r--. A última alternativa descreve o 755, em que os outros também executam; a terceira confunde o 5 (4 + 1, leitura e execução) com o 6 (4 + 2, leitura e escrita).
+    tags: [linux, shell]
+
+  - slug: devops-junior-linux-kill-signals
+    title: "Sinal para encerrar o processo com calma"
+    difficulty: easy
+    statement: |
+      Você precisa encerrar o processo de uma aplicação de forma que ela feche conexões e grave o que estiver pendente. Qual sinal enviar primeiro?
+    options:
+      - text: "`SIGKILL` (`kill -9`), porque garante o encerramento imediato"
+      - text: "`SIGSTOP`, porque encerra o processo sem perder dados"
+      - text: "`SIGHUP`, porque é o único sinal que o processo consegue tratar"
+      - text: "`SIGTERM` (padrão do `kill`), que o processo pode capturar"
+        correct: true
+    explanation: |
+      O `SIGTERM` é um pedido de encerramento: a aplicação pode capturá-lo, terminar o trabalho em andamento e sair. O `SIGKILL` é tentador por ser garantido, mas não pode ser capturado nem ignorado; o kernel mata o processo na hora, sem chance de limpeza, e por isso fica como último recurso. `SIGSTOP` só pausa o processo, e `SIGHUP` é tratável, mas não é o único, e costuma ser usado para recarregar configuração.
+    tags: [linux]
+
+  - slug: devops-junior-shell-pipe
+    title: "O que faz `grep | wc -l`"
+    difficulty: easy
+    statement: |
+      Em um servidor Linux, o que faz o comando `grep "ERROR" app.log | wc -l`?
+    options:
+      - text: Conta quantas linhas de `app.log` contêm o texto `ERROR`
+        correct: true
+      - text: Conta quantas vezes `ERROR` aparece, inclusive repetido na mesma linha
+      - text: Apaga as linhas com `ERROR` e mostra quantas sobraram
+      - text: Salva as linhas com `ERROR` em um arquivo chamado `wc`
+    explanation: |
+      O pipe (`|`) liga a saída padrão do `grep` à entrada padrão do `wc`. O `grep` imprime cada linha que contém o padrão uma única vez, e `wc -l` conta as linhas recebidas. Por isso uma linha com dois `ERROR` conta como um; para contar ocorrências seria preciso `grep -o "ERROR" app.log | wc -l`. Nada é apagado nem salvo em arquivo, porque não há redirecionamento.
+    tags: [shell, linux]
+
+  - slug: devops-junior-dns-record-types
+    title: "Apontar um nome para um IPv4"
+    difficulty: easy
+    statement: |
+      Você precisa que o nome `api.example.com` aponte diretamente para o endereço IPv4 `203.0.113.10`. Qual tipo de registro DNS deve ser criado?
+    options:
+      - text: Registro MX
+      - text: Registro CNAME
+      - text: Registro A
+        correct: true
+      - text: Registro TXT
+    explanation: |
+      O registro A associa um nome a um endereço IPv4 (o AAAA faz o mesmo para IPv6). O CNAME é a resposta tentadora, mas ele aponta um nome para outro nome, como um apelido, e não para um IP. O MX indica os servidores de e-mail do domínio e o TXT guarda texto livre, usado em verificações de domínio e políticas de e-mail.
+    tags: [redes]
+
+  - slug: devops-junior-bind-address
+    title: "Aplicação que não responde pelo IP"
+    difficulty: hard
+    statement: |
+      Uma aplicação numa máquina virtual responde normalmente a `curl localhost:8080` dentro da própria máquina, mas não responde quando acessada de outra máquina pelo IP, mesmo com o firewall liberado. Qual é a causa mais provável?
+    options:
+      - text: A aplicação escuta só em `127.0.0.1`, e não em `0.0.0.0`
+        correct: true
+      - text: A porta 8080 é reservada pelo sistema e só funciona localmente
+      - text: Falta um registro DNS apontando para o IP da máquina virtual
+      - text: O `curl` local usa HTTP/2 e o acesso externo usa HTTP/1.1
+    explanation: |
+      `127.0.0.1` é a interface de loopback: um processo que escuta só nela aceita conexões apenas da própria máquina. Escutando em `0.0.0.0` (todas as interfaces) ou no IP da placa de rede, ele passa a aceitar conexões externas. O DNS não entra na história, porque o acesso foi feito direto pelo IP, e portas a partir de 1024 não são privilegiadas (as privilegiadas vão de 0 a 1023), então a 8080 não tem restrição nenhuma.
+    tags: [redes, linux]
+
+  - slug: devops-junior-tls-guarantees
+    title: "O que o TLS garante no HTTPS"
+    difficulty: medium
+    statement: |
+      Ao acessar um site por HTTPS, o que o TLS garante na comunicação entre o navegador e o servidor?
+    options:
+      - text: Que o servidor não tem vulnerabilidades nem código malicioso instalado
+      - text: Sigilo e integridade dos dados em trânsito e autenticação do servidor
+        correct: true
+      - text: Que a resposta chega mais rápido, por causa da compressão
+      - text: Que os dados também ficam criptografados no banco do servidor
+    explanation: |
+      O TLS protege o canal: cifra o tráfego, detecta alterações no caminho e, pelo certificado assinado por uma autoridade confiável, prova que o servidor responde por aquele domínio. Ele não diz nada sobre a segurança da aplicação, então um site com cadeado pode ter falhas ou ser malicioso. Também não cobre o que acontece com os dados depois que chegam, como o armazenamento em banco.
+    tags: [redes, seguranca, http]
+
+  - slug: devops-junior-docker-image-vs-container
+    title: "Imagem versus contêiner no Docker"
+    difficulty: easy
+    statement: |
+      No Docker, qual é a relação correta entre uma imagem e um contêiner?
+    options:
+      - text: São dois nomes para a mesma coisa, usados em versões diferentes do Docker
+      - text: O contêiner é o arquivo gerado pelo build; a imagem é o processo em execução
+      - text: Uma imagem só pode originar um contêiner por vez, que a trava enquanto roda
+      - text: A imagem é um modelo somente leitura; o contêiner é uma instância dela em execução
+        correct: true
+    explanation: |
+      A imagem é o pacote imutável (sistema de arquivos em camadas e metadados como o comando de início), gerado pelo `docker build`. O contêiner é criado a partir dela e ganha uma camada gravável só dele, descartada quando o contêiner é removido. A mesma imagem pode originar vários contêineres ao mesmo tempo, que é justamente o que permite escalar horizontalmente.
+    tags: [docker]
+
+  - slug: devops-junior-docker-layer-cache
+    title: "Build lento a cada mudança de código"
+    difficulty: hard
+    statement: |
+      Neste Dockerfile de uma aplicação Node, qualquer mudança em um arquivo de código faz o `npm ci` rodar de novo, e o build demora minutos. Como reorganizá-lo?
+
+      ```dockerfile
+      FROM node:22
+      WORKDIR /app
+      COPY . .
+      RUN npm ci
+      CMD ["node", "server.js"]
+      ```
+    options:
+      - text: Trocar `npm ci` por `npm install`, que reaproveita o que já foi baixado
+      - text: Usar `ADD` no lugar de `COPY`, porque o `ADD` tem um cache mais inteligente
+      - text: Copiar primeiro só os manifestos de dependência, rodar `npm ci` e depois o resto
+        correct: true
+      - text: Rodar o build com `docker build --no-cache` para evitar cache inconsistente
+    explanation: |
+      Cada instrução gera uma camada, e o cache vale até a primeira instrução cuja entrada mudou. Com `COPY . .` antes do `npm ci`, qualquer arquivo alterado invalida a cópia e tudo o que vem depois. Copiando primeiro só `package.json` e `package-lock.json` e rodando `npm ci` em seguida, essa camada só é refeita quando as dependências mudam. Trocar por `npm install` não ajuda, porque a camada é invalidada do mesmo jeito; `--no-cache` faz o oposto do desejado e `ADD` não tem cache melhor que `COPY`.
+    tags: [docker]
+
+  - slug: devops-junior-docker-volumes
+    title: "Dados somem ao recriar o contêiner"
+    difficulty: easy
+    statement: |
+      Você sobe um PostgreSQL num contêiner sem montar nenhum volume e, depois de remover e recriar o contêiner, os dados sumiram. Como evitar isso?
+    options:
+      - text: Montar um volume nomeado no diretório de dados do banco
+        correct: true
+      - text: Usar sempre `docker stop` em vez de `docker rm`
+      - text: Fazer `docker commit` do contêiner depois de cada escrita
+      - text: Aumentar a memória do contêiner com `--memory`
+    explanation: |
+      Cada contêiner novo começa do zero. O que o anterior gravou fica na camada gravável dele ou, em imagens que declaram `VOLUME` (como a oficial do PostgreSQL), num volume anônimo que fica órfão quando o contêiner é recriado. Sem um volume nomeado montado no diretório de dados, o contêiner novo não reaproveita os dados; com ele, basta montar o mesmo volume. Parar em vez de remover só adia o problema, porque qualquer recriação, como a troca de versão da imagem, cai no mesmo caso, e `docker commit` gera uma imagem nova sem o conteúdo dos volumes.
+    tags: [docker]
+
+  - slug: devops-junior-cicd-build-once
+    title: "Gerar o artefato uma única vez"
+    difficulty: medium
+    statement: |
+      Num pipeline de CI/CD, por que é recomendado gerar o artefato (por exemplo, a imagem Docker) uma única vez e promover esse mesmo artefato de homologação para produção?
+    options:
+      - text: Porque o registro de imagens cobra por cada build executado no pipeline
+      - text: Porque vai para produção exatamente o que foi testado em homologação
+        correct: true
+      - text: Porque o ambiente de produção não tem permissão para executar builds
+      - text: Porque refazer o build apaga o histórico de versões do Git
+    explanation: |
+      Um novo build pode puxar outra versão de dependência ou de imagem base e gerar algo diferente do que passou nos testes. Promovendo o mesmo artefato, identificado por versão ou digest, o que foi validado em homologação é o que roda em produção; o que muda entre ambientes é a configuração, por variáveis e segredos. As outras alternativas não têm relação com o motivo real, que é reprodutibilidade.
+    tags: [ci-cd]
+
+  - slug: devops-junior-git-fetch-vs-pull
+    title: "git fetch versus git pull"
+    difficulty: easy
+    statement: |
+      No Git, qual é a diferença entre `git fetch` e `git pull` ao trabalhar com um repositório remoto?
+    options:
+      - text: "`git fetch` envia os commits locais e `git pull` recebe os commits remotos"
+      - text: São equivalentes; `pull` é só um apelido mais recente
+      - text: "`git fetch` apaga as branches locais que não existem no remoto"
+      - text: "`git fetch` só baixa as novidades; `git pull` baixa e integra na branch atual"
+        correct: true
+    explanation: |
+      `git fetch` atualiza as referências remotas (como `origin/main`) sem tocar na sua branch, o que permite revisar antes de integrar. `git pull` é um `fetch` seguido de `merge` (ou `rebase`, se configurado) na branch atual. Quem envia commits é o `git push`, e o `fetch` só remove referências remotas obsoletas com `--prune`, nunca branches locais.
+    tags: [git]
+
+  - slug: devops-junior-iac-benefits
+    title: "Vantagem da infraestrutura como código"
+    difficulty: easy
+    statement: |
+      Qual é a principal vantagem de gerenciar a infraestrutura de nuvem como código, em arquivos declarativos, em vez de criar os recursos manualmente pelo console do provedor?
+    options:
+      - text: O ambiente fica em arquivos versionados e revisáveis, que permitem recriá-lo igual
+        correct: true
+      - text: Elimina o custo dos recursos, porque a nuvem não cobra o que foi criado por código
+      - text: Impede que qualquer erro de configuração chegue ao ambiente de produção
+      - text: Dispensa conhecer os serviços do provedor, já que a ferramenta escolhe tudo sozinha
+    explanation: |
+      Com infraestrutura como código, cada mudança passa por versionamento e revisão como qualquer código, dá para recriar um ambiente idêntico e é possível detectar quando alguém alterou algo à mão (o chamado drift). Isso reduz erros, mas não impede todos: um arquivo errado aplicado com confiança leva o erro para produção do mesmo jeito. Os recursos continuam sendo cobrados e escolhidos por quem escreve o código.
+    tags: [infraestrutura-como-codigo, nuvem]
+
+  - slug: devops-junior-metrics-vs-logs
+    title: "Alerta para API lenta"
+    difficulty: medium
+    statement: |
+      Você quer receber um alerta quando a API ficar lenta de forma sustentada, por exemplo com respostas acima de 500 ms em boa parte das requisições nos últimos 5 minutos. Qual sinal de observabilidade é o mais adequado?
+    options:
+      - text: Logs de texto, procurando a palavra "lento" nas mensagens
+      - text: O trace de uma única requisição, escolhida ao acaso
+      - text: Métricas, como um histograma de latência por percentil
+        correct: true
+      - text: O gráfico de uso de CPU do servidor da aplicação
+    explanation: |
+      Métricas são séries numéricas baratas de armazenar e agregar, feitas para responder "como está o sistema agora" e disparar alertas; um histograma de latência permite alertar pelo p95 ou p99. Logs registram eventos individuais e são ótimos para investigar a causa, mas alertar a partir de texto é caro e frágil. Um trace mostra o caminho de uma requisição só, e CPU alta é um sintoma indireto que pode nem acompanhar a lentidão.
+    tags: [observabilidade]
+
+  - slug: devops-junior-k8s-deployment
+    title: "Três réplicas sempre no ar"
+    difficulty: medium
+    statement: |
+      No Kubernetes, você quer manter três réplicas de uma aplicação sempre em execução, recriando pods que caírem e trocando a versão aos poucos. Qual objeto usar?
+    options:
+      - text: "Um Pod com `replicas: 3`"
+      - text: Um Deployment
+        correct: true
+      - text: Um Service do tipo `LoadBalancer`
+      - text: Um ConfigMap com a versão da imagem
+    explanation: |
+      O Deployment declara o estado desejado (imagem e número de réplicas) e, por meio de um ReplicaSet, recria pods que falham e faz atualização gradual (rolling update) ao trocar a versão. Um Pod isolado não tem campo de réplicas nem é recriado se cair. O Service expõe os pods na rede, mas não os cria, e o ConfigMap só guarda configuração.
+    tags: [kubernetes]
+
+  - slug: devops-junior-k8s-service
+    title: "Pods que mudam de IP"
+    difficulty: medium
+    statement: |
+      Os pods de uma aplicação no Kubernetes são recriados com frequência e recebem um IP novo a cada vez. Como outros pods do cluster devem acessar essa aplicação de forma estável?
+    options:
+      - text: Guardando os IPs atuais dos pods em uma variável de ambiente
+      - text: Acessando sempre o IP do nó onde o pod está rodando
+      - text: Fixando o IP de cada pod no manifesto da aplicação
+      - text: Por meio de um Service, que tem nome DNS e IP estáveis
+        correct: true
+    explanation: |
+      O Service é um ponto de acesso estável: tem um IP virtual e um nome DNS dentro do cluster e encaminha o tráfego para os pods que casam com o seu seletor de labels, acompanhando automaticamente os pods que entram e saem. Guardar IPs de pods quebra na primeira recriação, e o IP do nó muda quando o pod é agendado em outro nó.
+    tags: [kubernetes, redes]

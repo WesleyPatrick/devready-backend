@@ -1,0 +1,6 @@
+# As vagas de cada trilha de área são a contagem da primeira leva da pesquisa de vagas. Os pesos, as
+# vagas por competência e as trilhas de stack são uma estimativa feita a partir dessa leva. A
+# exportação do devready-research substitui este arquivo.
+# A Meta não tem vagas coletadas: sem trilha, ela aparece entre as empresas que ficaram de fora.
+company: meta
+tracks: []

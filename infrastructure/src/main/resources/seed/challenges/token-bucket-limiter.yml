@@ -1,0 +1,116 @@
+slug: token-bucket-limiter
+title: Limitador de taxa com balde de fichas
+area: devops
+level: senior
+difficulty: medium
+tags: [arquitetura, algoritmos, http]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Um gateway protege um serviço com um limitador de taxa do tipo *token bucket* (balde de fichas). O balde guarda no máximo `capacity` fichas e cada requisição aceita gasta uma. As fichas se repõem num ritmo fixo: o balde cheio deixa passar uma rajada curta, mas no longo prazo o serviço não recebe mais do que o ritmo de reposição.
+
+  Você recebe os instantes das requisições em ms (`times`, em ordem não decrescente), `capacity` e `refillMs`. Devolva, em ordem crescente, os índices das requisições recusadas.
+
+  Regras:
+  - No instante 0 o balde está cheio, com `capacity` fichas.
+  - Entra 1 ficha em cada múltiplo de `refillMs` (`refillMs`, `2 · refillMs`, `3 · refillMs`, …), contado a partir de 0, e não a partir da última requisição. Uma ficha que chega com o balde cheio se perde: o balde nunca passa de `capacity`.
+  - Uma requisição no instante `t` conta com as fichas creditadas até `t`, inclusive. Se houver ao menos uma, a requisição é aceita e gasta uma ficha; se não houver, é recusada e não gasta nada.
+  - Requisições no mesmo instante são atendidas na ordem da lista.
+
+  Limites: até 10^5 requisições, instantes entre 0 e 10^9, `1 <= capacity <= 10^9` e `1 <= refillMs <= 10^9`.
+
+  Exemplo: com `times = [0, 0, 0, 0, 100, 150, 250]`, `capacity = 3` e `refillMs = 100`, as três primeiras requisições esvaziam o balde e a quarta é recusada. Em 100 entra uma ficha, que a requisição de 100 usa; a de 150 encontra o balde vazio. Em 200 entra outra ficha, usada pela requisição de 250. A resposta é `[3, 5]`.
+approachSummary: |
+  Não simule ficha a ficha nem milissegundo a milissegundo: guarde o saldo do balde e quantas reposições já foram creditadas. A reposição de número `t / refillMs` (divisão inteira) é a última que aconteceu até o instante `t`, então a cada requisição some ao saldo `t / refillMs - creditadas`, limite o resultado a `capacity` e atualize as creditadas; depois aceite a requisição (saldo menos um) ou recuse-a, se o saldo for zero. Contar as reposições pela divisão do próprio instante, e não pela diferença entre requisições, preserva a fração de intervalo que sobra entre elas. Custo O(n) de tempo e O(1) de memória além da saída. Os erros comuns são medir a reposição desde a última requisição (`(t - anterior) / refillMs`, que perde o resto), deixar o saldo passar de `capacity` depois de um período parado, calcular o saldo direto por `capacity + t / refillMs - aceitas` (que esquece as fichas perdidas com o balde cheio) e descontar ficha de requisição recusada. Em Java, some o saldo com as reposições em `long`.
+languages:
+  java:
+    functionName: rejectedRequests
+    starterCode: |
+      class Solution {
+          public int[] rejectedRequests(int[] times, int capacity, int refillMs) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      class Solution {
+          public int[] rejectedRequests(int[] times, int capacity, int refillMs) {
+              int[] buffer = new int[times.length];
+              int count = 0;
+              long tokens = capacity;
+              long credited = 0;
+              for (int i = 0; i < times.length; i++) {
+                  long refills = times[i] / refillMs;
+                  tokens = Math.min((long) capacity, tokens + (refills - credited));
+                  credited = refills;
+                  if (tokens > 0) {
+                      tokens--;
+                  } else {
+                      buffer[count++] = i;
+                  }
+              }
+              int[] result = new int[count];
+              System.arraycopy(buffer, 0, result, 0, count);
+              return result;
+          }
+      }
+  python:
+    functionName: rejected_requests
+    starterCode: |
+      class Solution:
+          def rejected_requests(self, times, capacity, refill_ms):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def rejected_requests(self, times, capacity, refill_ms):
+              tokens = capacity
+              credited = 0
+              rejected = []
+              for i, t in enumerate(times):
+                  refills = t // refill_ms
+                  tokens = min(capacity, tokens + (refills - credited))
+                  credited = refills
+                  if tokens > 0:
+                      tokens -= 1
+                  else:
+                      rejected.append(i)
+              return rejected
+  javascript:
+    functionName: rejectedRequests
+    starterCode: |
+      class Solution {
+        rejectedRequests(times, capacity, refillMs) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        rejectedRequests(times, capacity, refillMs) {
+          let tokens = capacity;
+          let credited = 0;
+          const rejected = [];
+          for (let i = 0; i < times.length; i++) {
+            const refills = Math.floor(times[i] / refillMs);
+            tokens = Math.min(capacity, tokens + (refills - credited));
+            credited = refills;
+            if (tokens > 0) {
+              tokens--;
+            } else {
+              rejected.push(i);
+            }
+          }
+          return rejected;
+        }
+      }
+testCases:
+  - { args: [[0, 0, 0, 0, 100, 150, 250], 3, 100], expected: [3, 5], visible: true }
+  - { args: [[0, 0, 50, 100, 199, 200], 2, 100], expected: [2, 4], visible: true }
+  - { args: [[], 5, 10], expected: [], visible: false }
+  - { args: [[1000, 1000, 1000, 1001], 2, 10], expected: [2, 3], visible: false }
+  - { args: [[0, 150, 220, 290, 300], 1, 100], expected: [3], visible: false }
+  - { args: [[0, 999999999, 1000000000, 1000000000], 1, 1000000000], expected: [1, 3], visible: false }
+  - { args: [[0, 0, 0, 0, 0, 999, 1000, 1000, 2500, 2500, 2500, 2500, 9000, 9000, 9000, 9000], 3, 1000], expected: [3, 4, 5, 7, 9, 10, 11, 15], visible: false }
+  - { args: [[5, 5, 6, 6, 6, 8], 1, 1], expected: [1, 3, 4], visible: false }

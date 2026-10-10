@@ -1,0 +1,19 @@
+devready:
+  social:
+    google:
+      client-id: test-google-id
+      client-secret: test-google-secret
+    github:
+      client-id: test-github-id
+      client-secret: test-github-secret
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret
+  frontend-url: http://localhost:5173
+  seed:
+    enabled: false
+  auth:
+    rate-limit:
+      enabled: false
+spring:
+  flyway:
+    enabled: true

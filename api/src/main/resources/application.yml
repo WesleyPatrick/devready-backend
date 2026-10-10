@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: devready-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/devready}
+    username: ${DATABASE_USER:devready}
+    password: ${DATABASE_PASSWORD:devready}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+  rabbitmq:
+    addresses: ${RABBITMQ_URL:amqp://devready:devready@localhost:5672}
+  mvc:
+    problemdetails:
+      enabled: true
+  session:
+    timeout: 10m
+    redis:
+      namespace: devready:session
+
+devready:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  # Login social: cada provedor só é registrado com id e segredo preenchidos. Vazios ou ausentes, a
+  # API sobe sem ele e GET /api/v1/auth/providers não o lista.
+  social:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+    github:
+      client-id: ${GITHUB_CLIENT_ID:}
+      client-secret: ${GITHUB_CLIENT_SECRET:}
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-deploy-0123456789}
+    access-token-ttl: 15m
+  auth:
+    refresh-token-ttl: 7d
+    one-time-code-ttl: 60s
+    rate-limit:
+      enabled: true
+      requests-per-minute: 10
+  # O rótulo de versão que a tela mostra em cada linguagem (o padrão é o do Judge0 CE 1.13.1).
+  # Só o worker fala com o Judge0: a API não recebe o endereço dele.
+  evaluation:
+    runtimes:
+      JAVA: Java 13
+      PYTHON: Python 3.8
+      JAVASCRIPT: Node 12
+  admin:
+    email: ${DEVREADY_ADMIN_EMAIL:}
+    password: ${DEVREADY_ADMIN_PASSWORD:}
+  seed:
+    enabled: true
+
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /api/swagger-ui
+
+server:
+  port: ${SERVER_PORT:8080}
+  # Atrás do nginx: o Tomcat lê X-Forwarded-Proto (redirect_uri do OAuth2 com https) e
+  # X-Forwarded-For (getRemoteAddr() devolve o IP do cliente, usado no rate limit).
+  forward-headers-strategy: native
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

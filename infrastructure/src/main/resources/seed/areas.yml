@@ -1,0 +1,19 @@
+# Configuração de sessão por área. Os valores podem ser ajustados pelo admin depois; o seed só insere o que falta.
+- slug: backend
+  name: Backend
+  questionCount: 8
+  challengeCount: 2
+  durationMinutes: 45
+  objectiveWeight: 0.5
+- slug: frontend
+  name: Frontend
+  questionCount: 8
+  challengeCount: 2
+  durationMinutes: 45
+  objectiveWeight: 0.5
+- slug: devops
+  name: DevOps
+  questionCount: 10
+  challengeCount: 1
+  durationMinutes: 40
+  objectiveWeight: 0.7

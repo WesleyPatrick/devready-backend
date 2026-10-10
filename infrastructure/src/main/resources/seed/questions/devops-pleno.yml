@@ -1,0 +1,227 @@
+area: devops
+level: pleno
+questions:
+  - slug: devops-pleno-docker-multistage-build
+    title: "Imagem final enxuta com build em etapas"
+    difficulty: medium
+    statement: |
+      O `Dockerfile` de uma API em Java instala o JDK e o Maven, compila o projeto e roda o jar na mesma imagem, que passou de 900 MB e leva as ferramentas de build para produção. Qual mudança resolve o problema sem mudar como a aplicação é compilada?
+    options:
+      - text: "Usar build em etapas: compilar numa e copiar só o jar para uma imagem final com JRE"
+        correct: true
+      - text: Juntar todos os `RUN` em um só, porque cada instrução cria uma camada e o tamanho é a soma delas
+      - text: Rodar `rm -rf ~/.m2` no fim do mesmo `Dockerfile`, que devolve o espaço ao tamanho final da imagem
+      - text: Compilar na máquina de cada pessoa e copiar o jar com `COPY`, para o `Dockerfile` não precisar do Maven
+    explanation: |
+      No build em etapas (`FROM ... AS build` e depois `COPY --from=build`), tudo o que existe na etapa de compilação fica de fora da imagem final: JDK, Maven e cache de dependências. Juntar `RUN` reduz camadas, mas o conteúdo continua lá. Apagar arquivos numa camada posterior não devolve espaço, porque a camada anterior já os contém. Compilar na máquina de cada pessoa tira o build do ambiente controlado: o resultado passa a variar com a versão local de cada ferramenta e deixa de ser reprodutível.
+    tags: [docker]
+
+  - slug: devops-pleno-docker-sigterm-pid1
+    title: "Contêiner que demora 10 s para parar"
+    difficulty: hard
+    statement: |
+      No deploy, os contêineres de uma API demoram 10 segundos para encerrar e depois são mortos à força, perdendo requisições em andamento. O `Dockerfile` termina com `CMD java -jar app.jar`, e a aplicação trata `SIGTERM` corretamente quando roda direto no terminal. Qual a causa mais provável e o ajuste?
+    options:
+      - text: O tempo de espera do Docker é curto demais; basta aumentar `--stop-timeout` para a aplicação terminar sozinha
+      - text: A forma shell do `CMD` deixa um `sh` como PID 1, que não repassa o sinal; usar a forma exec
+        correct: true
+      - text: O Docker envia `SIGKILL` primeiro por padrão; é preciso configurar o runtime para que ele envie `SIGTERM` antes
+      - text: O sinal só chega se a aplicação rodar com `--privileged`, que libera o tratamento de sinais no contêiner
+    explanation: |
+      Na forma shell, o Docker executa `/bin/sh -c "java -jar app.jar"`: o shell vira o PID 1 e não encaminha `SIGTERM` ao filho (em shells como o `dash`, das imagens Debian e Ubuntu; alguns fazem `exec` do último comando, mas não dá para contar com isso), então a aplicação nunca é avisada e só morre no `SIGKILL` depois do prazo. A forma exec (`CMD ["java", "-jar", "app.jar"]`) coloca a JVM como PID 1, e em scripts de entrada vale terminar com `exec java ...`. Aumentar o prazo só adia o problema. O Docker já envia `SIGTERM` primeiro e `SIGKILL` depois do prazo, e `--privileged` não tem relação com sinais.
+    tags: [docker, linux]
+
+  - slug: devops-pleno-ci-cache-lockfile-key
+    title: "Chave de cache do pipeline de CI"
+    difficulty: medium
+    statement: |
+      O pipeline reinstala todas as dependências a cada execução e leva 6 minutos. O time quer guardar o diretório de dependências em cache entre execuções, sem correr o risco de testar com pacotes desatualizados. Qual chave de cache é a mais adequada?
+    options:
+      - text: Uma chave fixa, como `deps`, para o cache ser reaproveitado sempre e a instalação ser a mais rápida possível
+      - text: O nome da branch, para cada branch ter o seu cache e nunca misturar dependências de ramos diferentes
+      - text: O hash do arquivo de lock, com uma chave de apoio mais genérica para reaproveitar o cache parcial
+        correct: true
+      - text: O número da execução do pipeline, para cada rodada começar com um cache novo e limpo
+    explanation: |
+      Derivar a chave do hash do arquivo de lock faz o cache mudar exatamente quando as dependências mudam; a chave de apoio permite começar de um cache próximo e instalar só a diferença. Uma chave fixa nunca é invalidada, e o pipeline passa a testar com pacotes velhos mesmo depois de uma atualização. Chave por branch não muda quando o lock muda dentro da mesma branch, então volta o risco de testar com pacotes velhos, e ainda duplica caches entre ramos com as mesmas dependências. Chave por número de execução nunca acerta o cache, e o pipeline continua tão lento quanto antes.
+    tags: [ci-cd]
+
+  - slug: devops-pleno-deploy-expand-contract
+    title: "Migração de banco sem derrubar a versão antiga"
+    difficulty: hard
+    statement: |
+      Uma release renomeia a coluna `nome` para `nome_completo`. O deploy é rolling, e por alguns minutos instâncias da versão antiga e da nova atendem ao mesmo tempo no mesmo banco. Rodar o `ALTER TABLE ... RENAME COLUMN` antes do deploy derruba a versão antiga. Qual abordagem evita a queda e ainda permite voltar atrás?
+    options:
+      - text: Fazer o deploy em horário de baixo tráfego, com a migração no início, aceitando uma pequena janela de erro
+      - text: "Em etapas: adicionar a coluna nova, gravar nas duas, migrar os dados, ler da nova e só então remover a antiga"
+        correct: true
+      - text: Criar um banco novo para a versão nova e copiar os dados no momento do corte, mantendo o antigo para consulta
+      - text: Trocar o deploy rolling por um que derruba todas as instâncias antigas antes de subir as novas
+    explanation: |
+      O padrão expandir e contrair mantém cada passo compatível com a versão anterior do código: a coluna nova é só uma adição, a escrita dupla mantém os dois lados consistentes e a remoção da coluna antiga vem numa release posterior, quando ninguém mais a usa. Isso permite reverter qualquer etapa. A janela de baixo tráfego ainda gera erro e não resolve a convivência das duas versões. Um banco novo cria o problema de sincronizar escritas durante o corte. Derrubar tudo antes de subir troca o erro parcial por uma indisponibilidade total.
+    tags: [ci-cd, banco-de-dados, arquitetura]
+
+  - slug: devops-pleno-deploy-blue-green-vs-canary
+    title: "Azul-verde ou canário para uma mudança arriscada"
+    difficulty: medium
+    statement: |
+      Um time vai liberar uma mudança que afeta o cálculo de preços e quer detectar problemas com o menor número possível de usuários expostos, mas com rollback rápido. Qual estratégia de deploy combina melhor com esse objetivo?
+    options:
+      - text: Azul-verde, porque os dois ambientes ficam idênticos e o tráfego é testado antes do corte
+      - text: Recreate, porque a versão nova só sobe depois de a antiga parar e não há duas versões ao mesmo tempo
+      - text: Rolling update com todas as instâncias em paralelo, porque termina mais rápido e reduz o tempo de exposição
+      - text: Canário, enviando uma pequena fatia do tráfego à versão nova e ampliando conforme as métricas
+        correct: true
+    explanation: |
+      No canário, só uma fração pequena dos usuários vê a versão nova enquanto o time compara taxa de erro, latência e métricas de negócio; se algo piorar, basta devolver o tráfego, e a exposição ao problema é limitada. No azul-verde o rollback também é rápido, mas o corte costuma mandar todo o tráfego de uma vez, então o defeito atinge todos os usuários antes de alguém perceber. O recreate causa indisponibilidade e expõe todo mundo. O rolling com instâncias em paralelo perde o controle de exposição gradual e não compara as duas versões.
+    tags: [ci-cd]
+
+  - slug: devops-pleno-k8s-liveness-checks-database
+    title: "Liveness que consulta o banco de dados"
+    difficulty: hard
+    statement: |
+      O endpoint usado como `livenessProbe` de uma API faz um `SELECT 1` no banco. Numa manhã o banco ficou lento por dois minutos e todos os pods da API foram reiniciados em sequência, transformando uma lentidão numa queda completa. Qual é o ajuste correto?
+    options:
+      - text: Aumentar o `failureThreshold` do liveness para tolerar mais falhas seguidas e evitar reinícios por causa da lentidão do banco
+      - text: Deixar o liveness só com o processo e mover a checagem do banco para o readiness
+        correct: true
+      - text: Remover o readiness e manter só o liveness com o `SELECT 1`, para o Kubernetes decidir tudo com um único teste
+      - text: Aumentar o número de réplicas, porque com mais pods o reinício simultâneo deixa de derrubar o serviço
+    explanation: |
+      O liveness responde "este processo travou e só um reinício resolve?". Reiniciar a API não conserta o banco, só soma o custo de subir tudo de novo e piora a situação. A dependência externa pertence ao readiness, que apenas retira o pod do tráfego até a dependência voltar, sem matá-lo. Aumentar o limite de falhas só atrasa o mesmo efeito. Remover o readiness deixa de proteger o serviço, e mais réplicas reiniciam juntas pelo mesmo motivo, já que todas dependem do mesmo banco. O readiness com dependência compartilhada tira todos os pods do tráfego ao mesmo tempo quando o banco cai, o que ainda é melhor que reiniciar tudo, mas pede cuidado.
+    tags: [kubernetes, observabilidade]
+
+  - slug: devops-pleno-k8s-startup-probe
+    title: "Aplicação lenta para iniciar e reiniciada em loop"
+    difficulty: medium
+    statement: |
+      Uma aplicação legada leva até 90 segundos para ficar pronta. O pod entra em `CrashLoopBackOff`: o liveness começa a testar aos 10 segundos e, após três falhas, o Kubernetes reinicia o contêiner antes de ele terminar de subir. Qual solução trata a causa sem enfraquecer a detecção de travamentos depois que a aplicação já está rodando?
+    options:
+      - text: Aumentar o `initialDelaySeconds` do liveness para 300 segundos, que cobre o pior caso de inicialização
+      - text: Desligar o liveness e deixar apenas o readiness, que não reinicia o contêiner durante a subida
+      - text: Configurar um `startupProbe` tolerante, que adia o liveness até a subida terminar
+        correct: true
+      - text: Aumentar o `timeoutSeconds` do liveness, porque a falha vem de respostas lentas durante a inicialização
+    explanation: |
+      Enquanto o `startupProbe` não passa, o liveness e o readiness ficam suspensos; depois que ele passa, o liveness volta a usar os parâmetros normais e detecta travamentos em segundos. Um atraso fixo de 300 segundos cobre a subida, mas deixa um travamento ocorrido logo depois sem detecção por todo esse tempo, e pode ser curto ou longo demais conforme a máquina. Desligar o liveness elimina a proteção contra deadlocks. Aumentar o timeout não muda o fato de que a aplicação ainda nem abriu a porta.
+    tags: [kubernetes]
+
+  - slug: devops-pleno-k8s-requests-limits-cpu
+    title: "Requests e limits de CPU no pod"
+    difficulty: medium
+    statement: |
+      Um serviço tem `requests.cpu: 100m` e `limits.cpu: 200m`, mas o monitoramento mostra latência alta em picos, com o nó quase ocioso. As métricas indicam `container_cpu_cfs_throttled_periods_total` crescendo. O que está acontecendo e qual ajuste faz sentido?
+    options:
+      - text: O limit impõe uma cota de CPU por período mesmo com o nó livre; é preciso subir ou remover o limit
+        correct: true
+      - text: O scheduler está colocando o pod num nó cheio porque o request é baixo, e o nó roubaria CPU do contêiner
+      - text: O request limita o uso máximo do contêiner a 100m; é preciso igualar o request ao limit para resolver
+      - text: O throttling só ocorre quando o nó está saturado, então o problema é a quantidade de nós do cluster
+    explanation: |
+      O limit de CPU é aplicado pelo kernel por cota de tempo: ao atingir 200m no período, o contêiner é pausado até o próximo, mesmo com CPU sobrando no nó, e isso aparece como latência em picos. O request serve para o scheduler reservar capacidade e definir a fatia garantida, não é um teto. Request baixo demais pode superlotar um nó, mas isso causaria disputa em nó cheio, e aqui o nó está ocioso. Por isso o ajuste é medir o consumo real e subir o limit, ou removê-lo e manter um request bem dimensionado, que garante a fatia mínima e deixa o contêiner usar a CPU ociosa do nó; o custo de ficar sem limit é menos previsibilidade e o risco de um vizinho ruidoso.
+    tags: [kubernetes]
+
+  - slug: devops-pleno-k8s-oomkilled-memory-limit
+    title: "Pod reiniciado com OOMKilled"
+    difficulty: easy
+    statement: |
+      Um pod reinicia de tempos em tempos e o `kubectl describe pod` mostra `Last State: Terminated, Reason: OOMKilled`. O contêiner tem `limits.memory: 512Mi`. O que isso significa?
+    options:
+      - text: O nó ficou sem memória livre e o Kubernetes escolheu esse pod para despejar, mesmo sem ele passar do limite
+      - text: O disco do nó ficou cheio e o contêiner foi encerrado por não conseguir gravar os logs no volume
+      - text: O processo usou mais que os 512Mi do limit e o kernel o encerrou, então é preciso revisar uso ou limit
+        correct: true
+      - text: O liveness falhou por falta de memória e o Kubernetes reiniciou o contêiner por causa dessa falha
+    explanation: |
+      `OOMKilled` indica que o kernel matou o processo por estourar o limite de memória do cgroup do contêiner: o caminho é investigar vazamento ou pico de uso, ajustar o heap da aplicação ao limite ou subir o limit. Quando o kubelet despeja um pod por falta de memória no nó, o status é `Evicted`, não `OOMKilled`; com um limit definido e esse motivo, a explicação mais provável é o próprio contêiner ter passado do limite. Disco cheio gera outro tipo de despejo. Uma falha de liveness aparece como reinício por probe, com outro motivo, e não como encerramento pelo kernel.
+    tags: [kubernetes]
+
+  - slug: devops-pleno-iac-drift-detection
+    title: "Alteração manual fora do Terraform"
+    difficulty: medium
+    statement: |
+      Alguém aumentou o tamanho de uma instância direto no console do provedor para resolver um incidente. Na semana seguinte, um `terraform apply` de outra mudança reverteu o tamanho e causou nova lentidão. Qual prática evita que isso se repita?
+    options:
+      - text: Proibir o `apply` em horário comercial, para ninguém reverter sem querer um ajuste feito durante um incidente
+      - text: Rodar o `plan` no pipeline, revisar a diferença e restringir mudanças manuais no console
+        correct: true
+      - text: Usar `terraform apply -auto-approve` no pipeline, porque revisar o plano atrasa as mudanças urgentes
+      - text: "Adicionar `lifecycle { ignore_changes = [instance_type] }` ao recurso, para o Terraform nunca mais reverter ajustes do console"
+    explanation: |
+      O `plan` mostra a diferença entre o código e a infraestrutura real, e revisá-lo (de preferência no pull request) expõe o drift antes de ele ser desfeito; limitar o console manual e registrar a mudança no código, mesmo em emergência, fecha o ciclo. Proibir o `apply` em certos horários não resolve a causa, que é o estado divergente. O `-auto-approve` remove justamente a revisão que teria mostrado a reversão. O `ignore_changes` evita a reversão, mas deixa o código mentindo sobre a infraestrutura e esconde o próximo drift. Uma mudança de emergência feita no console precisa voltar para o código.
+    tags: [infraestrutura-como-codigo]
+
+  - slug: devops-pleno-iac-remote-state-lock
+    title: "Estado do Terraform em lugar compartilhado"
+    difficulty: easy
+    statement: |
+      Duas pessoas rodaram `terraform apply` quase ao mesmo tempo, cada uma com o arquivo de estado na própria máquina, e acabaram criando recursos duplicados. O que o time deve adotar?
+    options:
+      - text: Enviar o arquivo de estado para o Git, para as duas pessoas sempre partirem da última versão commitada
+      - text: Combinar por mensagem quem aplica primeiro, já que as mudanças raramente coincidem e o processo é simples
+      - text: Manter o estado local e rodar `terraform refresh` antes de cada `apply`, para sincronizar com a infraestrutura
+      - text: Guardar o estado num backend remoto com bloqueio, que impede duas execuções simultâneas
+        correct: true
+    explanation: |
+      Um backend remoto (como um bucket com bloqueio) mantém uma única cópia do estado e trava a execução enquanto outra estiver em andamento, o que elimina a corrida. Versionar o estado no Git não impede dois `apply` ao mesmo tempo e ainda expõe segredos que costumam aparecer nele. Combinar por mensagem depende de disciplina e falha justamente no dia corrido. O `refresh` atualiza o estado local com a realidade, mas não evita que duas execuções gravem ao mesmo tempo.
+    tags: [infraestrutura-como-codigo]
+
+  - slug: devops-pleno-dns-ttl-before-migration
+    title: "TTL do DNS antes de migrar um serviço"
+    difficulty: medium
+    statement: |
+      O time vai trocar o IP de um serviço, de `198.51.100.10` para `203.0.113.20`, alterando o registro A. O TTL atual é de 24 horas e o corte precisa acontecer com poucos minutos de inconsistência. O que fazer antes da migração?
+    options:
+      - text: Reduzir o TTL com antecedência maior que o TTL antigo e restaurá-lo depois da migração
+        correct: true
+      - text: Reduzir o TTL na hora da troca, junto com a mudança do IP, para o cache expirar logo
+      - text: Aumentar o TTL para 48 horas, porque assim os resolvedores consultam menos e o corte é mais estável
+      - text: Manter o TTL e pedir aos clientes que limpem o cache do navegador depois da troca do registro
+    explanation: |
+      Os resolvedores guardam a resposta pelo TTL que viram quando consultaram. Se o TTL cai só na hora da troca, quem já tem a resposta antiga em cache continua com ela por até 24 horas; por isso reduz-se o TTL com antecedência superior ao valor antigo, faz-se o corte e depois se volta ao valor alto para reduzir carga. Aumentar o TTL agrava o problema. Limpar o cache do navegador não alcança os resolvedores intermediários, como os do provedor de internet, e não é algo que se peça aos clientes.
+    tags: [redes]
+
+  - slug: devops-pleno-network-refused-vs-timeout
+    title: "Conexão recusada ou sem resposta"
+    difficulty: easy
+    statement: |
+      Ao testar a conexão com um serviço na porta 5432, uma tentativa retorna `Connection refused` imediatamente, e outra para um servidor diferente fica parada até estourar `Connection timed out`. Qual é a leitura mais provável?
+    options:
+      - text: Os dois erros significam que o servidor está desligado, e a diferença está só no tempo de espera do cliente
+      - text: "Recusado: o host foi alcançado, mas nada escuta na porta; timeout: pacotes descartados por firewall ou rota"
+        correct: true
+      - text: O recusado indica um firewall bloqueando; o timeout indica que o serviço está lento para responder à conexão
+      - text: Os dois indicam problema de DNS, porque o nome não foi resolvido para o endereço do servidor
+    explanation: |
+      Com `connection refused`, o host recebeu o pacote e respondeu com um reset, ou seja, a rede funciona, mas nenhum processo escuta naquela porta. No timeout o cliente não recebe nada de volta: é o sintoma típico de firewall ou grupo de segurança que descarta o pacote, ou de rota errada. Por isso os dois erros apontam para causas e para próximos passos diferentes. Um erro de DNS aparece antes, como falha de resolução de nome, e não como recusa ou timeout de conexão. Um firewall configurado para rejeitar, em vez de descartar, também pode produzir recusa; o padrão mais comum, porém, é descartar, o que gera o timeout.
+    tags: [redes]
+
+  - slug: devops-pleno-alert-on-symptoms
+    title: "Alerta que acorda a equipe sem necessidade"
+    difficulty: medium
+    statement: |
+      O alerta "CPU acima de 80% por 1 minuto" dispara várias vezes por semana de madrugada, durante um processamento em lote, sem nenhum usuário afetado. A equipe já ignora as notificações. Qual mudança melhora mais a qualidade do alerta?
+    options:
+      - text: Subir o limite para 95% e manter a regra, porque o problema é só a sensibilidade do alerta
+      - text: Enviar o alerta por e-mail em vez de chamar a equipe, para ninguém acordar à noite
+      - text: Alertar sobre o sintoma, como taxa de erro ou latência, e deixar a CPU em painel
+        correct: true
+      - text: Aumentar a janela para 30 minutos, o que filtra os picos curtos e mantém a CPU como causa
+    explanation: |
+      Alertas que chamam uma pessoa devem representar impacto real ou iminente para o usuário, como erros e latência acima do objetivo; a CPU alta, sem sintoma, é informação de diagnóstico e fica melhor em painel. Subir o limite ou alargar a janela diminui o ruído, mas mantém a regra baseada numa causa possível, e ainda pode deixar passar um problema real. Mover tudo para e-mail faz a equipe perder o aviso quando houver um incidente de verdade, e a fadiga de alerta continua do mesmo jeito.
+    tags: [observabilidade]
+
+  - slug: devops-pleno-latency-percentiles-aggregation
+    title: "Latência p99 agregada entre instâncias"
+    difficulty: hard
+    statement: |
+      Um painel mostra a "p99 do serviço" calculando a média dos p99 que cada uma das 20 instâncias exporta. Duas instâncias recebem pouquíssimo tráfego, e o painel oscila muito sem relação com a experiência dos usuários. Qual é a forma correta de obter o percentil do serviço?
+    options:
+      - text: Trocar a média por uma mediana dos p99, que reduz o efeito das instâncias com pouco tráfego
+      - text: Exportar o p99 já calculado em cada instância e tomar o maior valor entre elas, o que cobre o pior caso
+      - text: Aumentar o intervalo de coleta, porque assim cada p99 é calculado com mais amostras e a média se estabiliza
+      - text: Exportar histogramas com buckets e somá-los entre as instâncias, calculando o percentil sobre o total
+        correct: true
+    explanation: |
+      Percentis não se combinam por média nem por mediana: o p99 de cada instância esconde quantas requisições ele representa, e uma instância quase parada pesa tanto quanto uma muito carregada. Com histogramas, as contagens por faixa de latência somam corretamente e o percentil sai da distribuição agregada, com a precisão limitada pela escolha dos buckets. O máximo dos p99 só mostra a pior instância, não o percentil do serviço. Um intervalo maior ajuda um pouco, mas mantém o erro conceitual de combinar valores já resumidos.
+    tags: [observabilidade]

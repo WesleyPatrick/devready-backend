@@ -1,0 +1,95 @@
+slug: top-k-frequent-words
+title: Ranking das k palavras mais comuns
+area: backend
+level: pleno
+difficulty: medium
+tags: [hash-map, strings, algoritmos]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dada uma lista de palavras com letras minúsculas de `a` a `z`, sem acento, e um inteiro `k`, devolva as `k` palavras que mais aparecem, da mais frequente para a menos frequente. Em caso de empate na frequência, vem primeiro a palavra que é menor em ordem alfabética.
+
+  Exemplo: `["sol", "chuva", "sol", "vento", "chuva", "sol"]` com `k = 2` produz `["sol", "chuva"]`. Vale `0 <= k <=` quantidade de palavras distintas.
+approachSummary: |
+  Conte as ocorrências com um mapa de palavra para frequência. Depois ordene as palavras distintas por frequência decrescente e, no empate, em ordem alfabética, e devolva as `k` primeiras: O(n + d log d) para n palavras e d distintas. Com um heap de tamanho `k` o custo da seleção cai para O(n + d log k), o que compensa quando `k` é pequeno perto de `d`. Ordenar a lista original também junta as repetidas e permite contar por sequência, mas custa O(n log n) sobre todas as palavras, e não só sobre as distintas.
+languages:
+  java:
+    functionName: topKFrequent
+    starterCode: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<String> topKFrequent(String[] words, int k) {
+              // sua solução
+              return new ArrayList<>();
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.HashMap;
+      import java.util.List;
+      import java.util.Map;
+
+      class Solution {
+          public List<String> topKFrequent(String[] words, int k) {
+              Map<String, Integer> counts = new HashMap<>();
+              for (String word : words) {
+                  counts.merge(word, 1, Integer::sum);
+              }
+              List<String> distinct = new ArrayList<>(counts.keySet());
+              distinct.sort((a, b) -> {
+                  int byCount = Integer.compare(counts.get(b), counts.get(a));
+                  return byCount != 0 ? byCount : a.compareTo(b);
+              });
+              return new ArrayList<>(distinct.subList(0, k));
+          }
+      }
+  python:
+    functionName: top_k_frequent
+    starterCode: |
+      class Solution:
+          def top_k_frequent(self, words, k):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def top_k_frequent(self, words, k):
+              counts = {}
+              for word in words:
+                  counts[word] = counts.get(word, 0) + 1
+              ordered = sorted(counts, key=lambda word: (-counts[word], word))
+              return ordered[:k]
+  javascript:
+    functionName: topKFrequent
+    starterCode: |
+      class Solution {
+        topKFrequent(words, k) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        topKFrequent(words, k) {
+          const counts = new Map();
+          for (const word of words) {
+            counts.set(word, (counts.get(word) || 0) + 1);
+          }
+          const distinct = Array.from(counts.keys());
+          distinct.sort((a, b) => {
+            if (counts.get(a) !== counts.get(b)) return counts.get(b) - counts.get(a);
+            return a < b ? -1 : a > b ? 1 : 0;
+          });
+          return distinct.slice(0, k);
+        }
+      }
+testCases:
+  - { args: [["sol", "chuva", "sol", "vento", "chuva", "sol"], 2], expected: ["sol", "chuva"], visible: true }
+  - { args: [["a", "b", "c", "b", "a", "d", "d", "d"], 3], expected: ["d", "a", "b"], visible: true }
+  - { args: [[], 0], expected: [], visible: false }
+  - { args: [["a"], 1], expected: ["a"], visible: false }
+  - { args: [["b", "a", "c"], 2], expected: ["a", "b"], visible: false }
+  - { args: [["x", "y", "x", "y", "z"], 1], expected: ["x"], visible: false }
+  - { args: [["bb", "aa", "bb", "aa", "cc", "cc"], 3], expected: ["aa", "bb", "cc"], visible: false }

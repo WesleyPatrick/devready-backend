@@ -1,0 +1,182 @@
+area: frontend
+level: pleno
+questions:
+  - slug: frontend-pleno-state-server-cache
+    title: "Dados do servidor como cache no cliente"
+    difficulty: medium
+    statement: |
+      Uma tela de pedidos busca a lista com `useEffect` e guarda a resposta num `useState`. Outras três telas fazem a mesma busca, e o time propõe trocar tudo por uma biblioteca de cache de dados do servidor (como React Query ou SWR). Qual é o ganho concreto dessa troca?
+    options:
+      - text: Os dados nunca ficam desatualizados, porque a biblioteca assume o papel de fonte da verdade
+      - text: Deduplica requisições, mostra o dado antigo enquanto revalida e traz estado de erro
+        correct: true
+      - text: Ela elimina as requisições repetidas, pois o dado é buscado uma única vez por sessão
+      - text: Ela dispensa o estado local, inclusive o de formulários e de abas abertas na tela
+    explanation: |
+      Dado do servidor é uma cópia emprestada, que envelhece. A biblioteca trata isso como cache: chaves de consulta evitam buscas duplicadas quando várias telas pedem o mesmo recurso, o valor antigo aparece na hora enquanto uma revalidação roda em segundo plano, e carregamento, erro e nova tentativa vêm prontos. Ela não torna o dado sempre fresco (o servidor continua sendo a fonte da verdade e há janelas de dado velho configuráveis), não busca uma vez só por sessão e não substitui o estado de interface, como o de um formulário ou o da aba selecionada.
+    tags: [react, cache, http]
+
+  - slug: frontend-pleno-forms-validation-timing
+    title: "Quando mostrar o erro de validação"
+    difficulty: medium
+    statement: |
+      Num formulário de cadastro, o erro "e-mail inválido" aparece a cada tecla, já na primeira letra, e os usuários reclamam de ser repreendidos enquanto ainda digitam. O time quer dar feedback cedo, mas sem esse incômodo. Qual é a abordagem mais adequada?
+    options:
+      - text: Validar só no envio do formulário e listar todos os erros de uma vez
+      - text: Validar a cada tecla, mas esconder a mensagem com um atraso fixo de dois segundos
+      - text: Remover a validação do cliente e deixar o servidor devolver os erros
+      - text: Mostrar o erro depois do campo perder o foco e revalidar a cada alteração
+        correct: true
+    explanation: |
+      Marcar o campo como "tocado" no `blur` evita a crítica prematura, e revalidar a cada mudança depois disso faz o erro sumir assim que o valor é corrigido, sem esperar outro blur. Validar só no envio atrasa o feedback justamente quando o usuário já preencheu tudo. O atraso fixo só adia o mesmo incômodo e confunde quem digita devagar. Tirar a validação do cliente piora a experiência com idas ao servidor para erros que se detectam localmente.
+    tags: [html, react]
+
+  - slug: frontend-pleno-cache-optimistic-update
+    title: "Atualização otimista que falha no servidor"
+    difficulty: hard
+    statement: |
+      Ao marcar uma tarefa como concluída, a tela atualiza o cache de dados na hora, antes de o `PATCH` responder (atualização otimista). Em testes, quando o servidor devolve erro 500, a tarefa continua marcada como concluída até a página ser recarregada. O que a mutação deve fazer?
+    options:
+      - text: Guardar o estado anterior do cache, restaurá-lo se der erro e revalidar a lista no fim
+        correct: true
+      - text: Só mostrar um aviso de erro e manter o estado otimista, pois o usuário já viu a mudança
+      - text: Esperar a resposta do servidor antes de atualizar o cache, como pede a atualização otimista
+      - text: Desligar a revalidação em segundo plano da lista para o estado otimista nunca ser sobrescrito
+    explanation: |
+      A atualização otimista é uma aposta de que o servidor vai aceitar. Para ela ser segura, a mutação guarda um instantâneo do cache antes de alterá-lo (cancelando antes as buscas em andamento da mesma chave, para uma resposta antiga não sobrescrever a aposta), devolve o instantâneo se der erro e, ao terminar com sucesso ou não, revalida para o cache voltar a refletir o servidor. Só avisar do erro deixa a tela mentindo. Esperar a resposta deixa de ser otimista, e desligar a revalidação trava o cache num estado que o servidor nunca confirmou.
+    tags: [react, cache]
+
+  - slug: frontend-pleno-perf-memo-unstable-props
+    title: "React.memo que não evita renderização"
+    difficulty: medium
+    statement: |
+      Uma lista de 500 itens renderiza cada `Item`, embrulhado em `React.memo`. Ainda assim, digitar na caixa de busca do componente pai re-renderiza todos os itens. O pai passa `item` (referência estável, vinda do estado) e `onSelect={(id) => setSelecionado(id)}`. Qual é a causa?
+    options:
+      - text: O `React.memo` compara as props em profundidade e falha com objetos grandes
+      - text: Quando o estado do pai muda, todos os filhos renderizam de novo, com ou sem `React.memo`
+      - text: A arrow function de `onSelect` é uma referência nova a cada render do pai
+        correct: true
+      - text: Todas as props precisam ser primitivas para o `React.memo` conseguir comparar
+    explanation: |
+      O `React.memo` faz comparação rasa: se alguma prop tem referência diferente da renderização anterior, o componente renderiza de novo. A arrow function inline é uma função nova a cada render do pai, o que derruba a memorização de todos os itens. Estabilizar com `useCallback` (ou passar o próprio `setSelecionado`, que já é estável) resolve. A comparação não é profunda, funciona em componentes de função e aceita objetos e funções, desde que a referência se mantenha.
+    tags: [react, performance-web]
+
+  - slug: frontend-pleno-perf-list-virtualization
+    title: "Tabela com dez mil linhas lenta"
+    difficulty: medium
+    statement: |
+      Uma tabela com 10 mil linhas leva segundos para montar e a rolagem trava, mesmo sem nenhuma requisição pendente. O produto quer manter a rolagem contínua, sem paginação. Qual técnica ataca a causa principal?
+    options:
+      - text: Embrulhar cada linha em `React.memo` para elas não renderizarem de novo
+      - text: Renderizar só as linhas visíveis na janela e reaproveitar os nós ao rolar
+        correct: true
+      - text: Mover a criação das linhas para um Web Worker, que monta o HTML em paralelo
+      - text: Usar o índice da linha como `key` para o React comparar menos nós
+    explanation: |
+      O custo vem da quantidade de nós de DOM: criar, estilizar e dar layout em dezenas de milhares de elementos pesa mesmo sem lógica cara. O janelamento (virtualização) mantém no DOM apenas o que cabe na tela e um pouco além, trocando o conteúdo ao rolar. `React.memo` evita renderizações repetidas, mas a primeira montagem continua criando todos os nós. Um Worker não acessa o DOM, e o índice como `key` não reduz a quantidade de elementos (e ainda causa problemas ao reordenar).
+    tags: [performance-web, react]
+
+  - slug: frontend-pleno-effect-fetch-race
+    title: "Resultado da busca que chega fora de ordem"
+    difficulty: hard
+    statement: |
+      Um campo de busca dispara um `fetch` num `useEffect` que depende do termo. Às vezes a tela mostra os resultados de "rea" depois de o usuário já ter digitado "react", porque a resposta mais antiga chegou por último. Qual correção resolve o problema de ordem?
+    options:
+      - text: Aplicar debounce no termo, que garante que nunca haverá duas requisições em andamento
+      - text: Tirar o termo das dependências do efeito, para ele rodar só uma vez
+      - text: Colocar `await` antes do `fetch` dentro do efeito, para as respostas virem em ordem
+      - text: Abortar a busca anterior com `AbortController` na função de limpeza do efeito
+        correct: true
+    explanation: |
+      Requisições diferentes não têm ordem de chegada garantida, e a função de limpeza do efeito roda antes da próxima execução: é o lugar de abortar a busca anterior ou marcar que o resultado dela deve ser descartado. O debounce reduz o número de requisições, mas não impede que uma lenta termine depois de uma rápida mais nova. Tirar a dependência congela a busca no primeiro termo. O `await` dentro de um efeito só espera aquela chamada e não coordena duas execuções diferentes.
+    tags: [react, http]
+
+  - slug: frontend-pleno-a11y-modal-focus
+    title: "Foco ao fechar um modal"
+    difficulty: medium
+    statement: |
+      Um modal abre ao clicar em "Editar perfil". Ao fechá-lo com Esc, quem navega pelo teclado volta ao início da página e perde o lugar. O que a implementação do modal deve fazer?
+    options:
+      - text: Guardar o elemento que tinha o foco ao abrir e devolver o foco a ele ao fechar
+        correct: true
+      - text: Usar `autofocus` no primeiro campo do modal, que já faz o navegador devolver o foco ao fechar
+      - text: Colocar `aria-hidden="true"` no botão que abriu o modal, enquanto ele estiver fechado
+      - text: Chamar `blur()` no elemento ativo ao fechar, para o navegador escolher o próximo foco
+    explanation: |
+      Um diálogo acessível leva o foco para dentro ao abrir, mantém o foco preso nele enquanto está aberto e, ao fechar, devolve o foco ao elemento que o disparou, para a pessoa continuar de onde estava. O `autofocus` só cuida da abertura e não devolve foco algum ao fechar. `aria-hidden` num elemento focável esconde dele a tecnologia assistiva sem tirá-lo da tabulação, criando um controle fantasma. Chamar `blur()` joga o foco para o `body`, que é justamente o "início da página" que o enunciado descreve como problema.
+    tags: [acessibilidade, html]
+
+  - slug: frontend-pleno-a11y-contrast-ratio
+    title: "Contraste do texto de corpo"
+    difficulty: easy
+    statement: |
+      O design traz texto de parágrafo em 16 px, cinza sobre branco, com razão de contraste de 3:1. A equipe quer cumprir o nível AA das WCAG. Essa combinação passa?
+    options:
+      - text: Sim, 3:1 é o mínimo do nível AA para qualquer tamanho de texto
+      - text: Não, o AA exige 4,5:1 para texto comum; 3:1 é só para texto grande
+        correct: true
+      - text: Sim, porque 16 px já conta como texto grande, que pede só 3:1
+      - text: Não, o AA exige 7:1 para qualquer texto, de qualquer tamanho
+    explanation: |
+      O nível AA pede 4,5:1 para texto de tamanho comum e 3:1 para texto grande (a partir de 18 pt, cerca de 24 px, ou 14 pt em negrito, cerca de 18,7 px) e para componentes de interface. O 7:1 é do nível AAA, mais rígido. Texto de 16 px, no tamanho comum de parágrafo, está longe de ser "grande", e o contraste baixo atrapalha também quem tem baixa visão ou lê sob sol forte.
+    tags: [acessibilidade, css]
+
+  - slug: frontend-pleno-a11y-live-region
+    title: "Mensagem de sucesso que o leitor de tela não lê"
+    difficulty: medium
+    statement: |
+      Ao salvar um formulário, aparece a mensagem "Alterações salvas" num toast que é inserido no DOM junto com o texto. Quem usa leitor de tela não ouve nada. Qual ajuste faz o anúncio acontecer sem tirar o foco de onde a pessoa está?
+    options:
+      - text: Atualizar o texto de uma região `aria-live="polite"` já presente no DOM
+        correct: true
+      - text: Mover o foco para o toast e dar a ele `tabindex="-1"` para ele ser lido
+      - text: Acrescentar um `aria-label` com o texto no `div` do toast ao inseri-lo no DOM
+      - text: Marcar o toast com `aria-hidden="false"` para que o leitor passe a enxergá-lo
+    explanation: |
+      Leitores de tela anunciam mudanças em regiões vivas que já existiam antes da alteração; um elemento que nasce já com o texto costuma passar em silêncio. Com `aria-live="polite"` (ou `role="status"`), o aviso espera a fala atual terminar e o foco permanece onde estava. Mover o foco interrompe o que a pessoa fazia. `aria-label` num `div` sem papel não é lido de forma confiável, e `aria-hidden="false"` não cria anúncio algum.
+    tags: [acessibilidade, html]
+
+  - slug: frontend-pleno-test-query-by-role
+    title: "Consultar por papel nos testes de componente"
+    difficulty: medium
+    statement: |
+      Num teste de componente com Testing Library, o time discute localizar o botão com `getByRole("button", { name: /salvar/i })` ou com `getByTestId("btn-salvar")`. Por que a primeira costuma ser a preferida?
+    options:
+      - text: O `getByRole` é mais rápido, pois o `getByTestId` percorre a árvore inteira
+      - text: O `getByRole` espera o elemento aparecer, e o `getByTestId` falha se ele ainda não renderizou
+      - text: O `getByTestId` não funciona em componentes que usam estado interno
+      - text: O teste espelha o que a pessoa percebe e quebra se o botão perder papel ou nome
+        correct: true
+    explanation: |
+      Consultar por papel e nome acessível testa o componente pelo lado do usuário: se o botão virar uma `div` sem semântica ou ficar sem rótulo, o teste falha e aponta um problema real de acessibilidade, enquanto continua passando se a classe CSS ou a estrutura interna mudarem. O `data-testid` é um recurso de último caso, pois nada garante que o elemento seja utilizável. Desempenho não é o critério (o `getByRole` costuma ser até mais lento), e quem espera elementos assíncronos são as consultas `findBy*`, não o `getByRole`: tanto ele quanto `getByTestId` falham na hora se o elemento ainda não existe.
+    tags: [testes, react]
+
+  - slug: frontend-pleno-forms-server-validation
+    title: "Validação no cliente não substitui a da API"
+    difficulty: easy
+    statement: |
+      Um formulário usa `required`, `type="email"` e `maxlength` do HTML para validar os campos. O time sugere dispensar a validação na API, "porque o navegador já barra". Qual é o problema dessa ideia?
+    options:
+      - text: Quem controla o cliente contorna a validação, então a API deve validar sempre
+        correct: true
+      - text: Nenhum, desde que a API use HTTPS, que impede alterar a requisição no caminho
+      - text: Só de experiência, pois sem validar na API, o erro volta sem mensagem amigável
+      - text: Nenhum, se a API conferir o cabeçalho `Origin` para aceitar só o próprio formulário
+    explanation: |
+      A requisição pode ser feita sem passar pela página, com `curl`, com o console do navegador ou com o HTML editado nas ferramentas de desenvolvedor, então o servidor nunca deve confiar no que veio do cliente. A validação do cliente existe para dar resposta rápida e boa experiência, não para segurança. O HTTPS protege o trajeto, mas não impede que a própria pessoa monte a requisição, e o `Origin` é só um cabeçalho que `curl` e scripts preenchem como quiserem. E o problema vai além da mensagem: dados inválidos aceitos pela API viram dado corrompido no banco.
+    tags: [html, seguranca]
+
+  - slug: frontend-pleno-cors-credentials
+    title: "CORS com cookies e Allow-Origin curinga"
+    difficulty: hard
+    statement: |
+      O app em `app.exemplo.com` chama `api.exemplo.com` com `fetch(url, { credentials: "include" })` para enviar o cookie de sessão. A API responde com `Access-Control-Allow-Origin: *` e o navegador bloqueia a resposta. Qual ajuste resolve?
+    options:
+      - text: 'Fazer o cliente usar `mode: "no-cors"` para o navegador ignorar a política'
+      - text: Mandar `Access-Control-Allow-Origin` como cabeçalho da requisição feita pelo cliente
+      - text: 'Devolver a origem exata do app e `Access-Control-Allow-Credentials: true`'
+        correct: true
+      - text: 'Manter o `*` e acrescentar `Access-Control-Allow-Methods: *` na resposta'
+    explanation: |
+      Com credenciais, o navegador não aceita o curinga `*` em `Allow-Origin`: o servidor precisa devolver a origem exata (conferida contra uma lista permitida) e `Access-Control-Allow-Credentials: true`; as respostas que variam por origem também devem levar `Vary: Origin`. O `no-cors` não libera nada, só produz uma resposta opaca que o código não consegue ler. Os cabeçalhos de CORS são da resposta, e mandá-los na requisição não tem efeito. Um `*` em `Allow-Methods` não corrige o `Allow-Origin` e também não vale com credenciais.
+    tags: [http, javascript]

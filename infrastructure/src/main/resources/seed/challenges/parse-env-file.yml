@@ -1,0 +1,114 @@
+slug: parse-env-file
+title: Normalizar arquivo de variáveis de ambiente
+area: devops
+level: junior
+difficulty: medium
+tags: [shell, strings, hash-map]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe as linhas de um arquivo `.env`. Devolva as variáveis normalizadas no formato `CHAVE=valor`, ordenadas pela chave em ordem de bytes, como `LC_ALL=C sort`.
+
+  Regras:
+  - Ignore linhas vazias, linhas só com espaços e comentários (linhas que, depois de tirar os espaços das pontas, começam com `#`).
+  - Separe cada linha no primeiro `=`; o valor pode conter outros `=`. Tire os espaços das pontas da chave e do valor.
+  - Ignore linhas sem `=` e linhas com a chave vazia. O valor pode ser vazio.
+  - Aspas e `#` no meio da linha fazem parte do valor; não há tratamento especial para eles.
+  - Se a mesma chave aparecer mais de uma vez, vale a última.
+
+  Exemplo: as linhas `"# banco"`, `"DB_PORT=5432"`, `"  APP_NAME = devready "` e `"DB_HOST=localhost"` produzem `["APP_NAME=devready", "DB_HOST=localhost", "DB_PORT=5432"]`.
+approachSummary: |
+  Percorra as linhas uma vez: tire os espaços das pontas, descarte vazias e comentários, localize o primeiro `=` com `indexOf` (não `split`, que quebraria valores com `=`), limpe chave e valor e grave num mapa, o que já faz a última ocorrência vencer. No fim, ordene as chaves e monte `CHAVE=valor`. O(n) para ler e O(k log k) para ordenar as k chaves; usar um mapa ordenado (`TreeMap` em Java) resolve as duas coisas de uma vez.
+languages:
+  java:
+    functionName: parseEnv
+    starterCode: |
+      class Solution {
+          public String[] parseEnv(String[] lines) {
+              // sua solução
+              return new String[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.Map;
+      import java.util.TreeMap;
+
+      class Solution {
+          public String[] parseEnv(String[] lines) {
+              Map<String, String> vars = new TreeMap<>();
+              for (String raw : lines) {
+                  String line = raw.strip();
+                  if (line.isEmpty() || line.startsWith("#")) {
+                      continue;
+                  }
+                  int eq = line.indexOf('=');
+                  if (eq < 0) {
+                      continue;
+                  }
+                  String key = line.substring(0, eq).strip();
+                  if (key.isEmpty()) {
+                      continue;
+                  }
+                  vars.put(key, line.substring(eq + 1).strip());
+              }
+              return vars.entrySet().stream()
+                      .map(e -> e.getKey() + "=" + e.getValue())
+                      .toArray(String[]::new);
+          }
+      }
+  python:
+    functionName: parse_env
+    starterCode: |
+      class Solution:
+          def parse_env(self, lines):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def parse_env(self, lines):
+              env = {}
+              for raw in lines:
+                  line = raw.strip()
+                  if not line or line.startswith("#") or "=" not in line:
+                      continue
+                  key, value = line.split("=", 1)
+                  key = key.strip()
+                  if key:
+                      env[key] = value.strip()
+              return [key + "=" + env[key] for key in sorted(env)]
+  javascript:
+    functionName: parseEnv
+    starterCode: |
+      class Solution {
+        parseEnv(lines) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        parseEnv(lines) {
+          const env = new Map();
+          for (const raw of lines) {
+            const line = raw.trim();
+            if (line === "" || line.startsWith("#")) continue;
+            const eq = line.indexOf("=");
+            if (eq < 0) continue;
+            const key = line.slice(0, eq).trim();
+            if (key === "") continue;
+            env.set(key, line.slice(eq + 1).trim());
+          }
+          return [...env.keys()]
+            .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+            .map((key) => key + "=" + env.get(key));
+        }
+      }
+testCases:
+  - { args: [["# banco", "DB_PORT=5432", "  APP_NAME = devready ", "DB_HOST=localhost"]], expected: ["APP_NAME=devready", "DB_HOST=localhost", "DB_PORT=5432"], visible: true }
+  - { args: [["PORT=8080", "", "DEBUG=false", "PORT = 9090"]], expected: ["DEBUG=false", "PORT=9090"], visible: true }
+  - { args: [[]], expected: [], visible: false }
+  - { args: [["# só comentário", "   ", "LINHA_SEM_IGUAL"]], expected: [], visible: false }
+  - { args: [["URL=postgres://db:5432/app?ssl=true", "EMPTY="]], expected: ["EMPTY=", "URL=postgres://db:5432/app?ssl=true"], visible: false }
+  - { args: [["=sem_chave", "   # comentário com espaço antes", "B=2", "A=1"]], expected: ["A=1", "B=2"], visible: false }
+  - { args: [["NAME=\"Dev Ready\"", "COLOR=#fff # tema"]], expected: ["COLOR=#fff # tema", "NAME=\"Dev Ready\""], visible: false }

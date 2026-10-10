@@ -1,0 +1,120 @@
+slug: parse-query-string
+title: Ler a query string de uma URL
+area: frontend
+level: pleno
+difficulty: easy
+tags: [strings, http]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe a *query string* de uma URL, com ou sem o `?` inicial. Devolva os pares `[chave, valor]` na ordem em que aparecem, já decodificados, como lista de listas de texto. Chaves repetidas aparecem uma vez para cada ocorrência.
+
+  Regras:
+  - Os pares são separados por `&`, e cada um é separado no primeiro `=`; o valor pode conter outros `=` depois de decodificado.
+  - Um par sem `=` tem valor vazio (`"flag"` vira `["flag", ""]`).
+  - Ignore segmentos vazios (como o de `a=1&&b=2`) e pares cuja chave é vazia (como `=3`).
+  - Decodifique `+` como espaço e `%XX` como o byte correspondente. As sequências `%XX` dos testes são válidas e decodificam para UTF-8 válido.
+
+  Exemplo: `"?a=1&b=2&a=3"` produz `[["a", "1"], ["b", "2"], ["a", "3"]]`.
+approachSummary: |
+  Tire o `?` inicial, quebre em `&` e trate cada segmento uma vez: descarte o vazio, separe no primeiro `=` (com `indexOf` ou `partition`, nunca um `split` completo, que perderia os `=` do valor), descarte a chave vazia e decodifique chave e valor, trocando `+` por espaço antes ou durante a decodificação percentual. Como a ordem das chaves deve ser mantida e repetições são permitidas, uma lista de pares basta; um mapa perderia as ocorrências repetidas. Custo O(n) no tamanho do texto.
+languages:
+  java:
+    functionName: parseQueryString
+    starterCode: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Solution {
+          public List<List<String>> parseQueryString(String query) {
+              // sua solução
+              return new ArrayList<>();
+          }
+      }
+    referenceSolution: |
+      import java.net.URLDecoder;
+      import java.nio.charset.StandardCharsets;
+      import java.util.ArrayList;
+      import java.util.Arrays;
+      import java.util.List;
+
+      class Solution {
+          public List<List<String>> parseQueryString(String query) {
+              String text = query.startsWith("?") ? query.substring(1) : query;
+              List<List<String>> pairs = new ArrayList<>();
+              for (String part : text.split("&")) {
+                  if (part.isEmpty()) {
+                      continue;
+                  }
+                  int eq = part.indexOf('=');
+                  String key = eq < 0 ? part : part.substring(0, eq);
+                  String value = eq < 0 ? "" : part.substring(eq + 1);
+                  if (key.isEmpty()) {
+                      continue;
+                  }
+                  pairs.add(
+                          Arrays.asList(
+                                  URLDecoder.decode(key, StandardCharsets.UTF_8),
+                                  URLDecoder.decode(value, StandardCharsets.UTF_8)));
+              }
+              return pairs;
+          }
+      }
+  python:
+    functionName: parse_query_string
+    starterCode: |
+      class Solution:
+          def parse_query_string(self, query):
+              # sua solução
+              return []
+    referenceSolution: |
+      from urllib.parse import unquote_plus
+
+
+      class Solution:
+          def parse_query_string(self, query):
+              text = query[1:] if query.startswith("?") else query
+              pairs = []
+              for part in text.split("&"):
+                  if not part:
+                      continue
+                  key, _, value = part.partition("=")
+                  if not key:
+                      continue
+                  pairs.append([unquote_plus(key), unquote_plus(value)])
+              return pairs
+  javascript:
+    functionName: parseQueryString
+    starterCode: |
+      class Solution {
+        parseQueryString(query) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        parseQueryString(query) {
+          const text = query.startsWith("?") ? query.slice(1) : query;
+          const decode = (s) => decodeURIComponent(s.replace(/\+/g, " "));
+          const pairs = [];
+          for (const part of text.split("&")) {
+            if (part === "") continue;
+            const eq = part.indexOf("=");
+            const key = eq < 0 ? part : part.slice(0, eq);
+            const value = eq < 0 ? "" : part.slice(eq + 1);
+            if (key === "") continue;
+            pairs.push([decode(key), decode(value)]);
+          }
+          return pairs;
+        }
+      }
+testCases:
+  - { args: ["?a=1&b=2&a=3"], expected: [["a", "1"], ["b", "2"], ["a", "3"]], visible: true }
+  - { args: ["q=a%26b%3Dc&t=1%2B1"], expected: [["q", "a&b=c"], ["t", "1+1"]], visible: true }
+  - { args: [""], expected: [], visible: false }
+  - { args: ["?"], expected: [], visible: false }
+  - { args: ["flag&x=&y=2"], expected: [["flag", ""], ["x", ""], ["y", "2"]], visible: false }
+  - { args: ["a=1&&=3&b=x=y"], expected: [["a", "1"], ["b", "x=y"]], visible: false }
+  - { args: ["?k=um+dois%20tres"], expected: [["k", "um dois tres"]], visible: false }

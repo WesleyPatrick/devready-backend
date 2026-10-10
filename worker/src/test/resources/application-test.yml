@@ -1,0 +1,12 @@
+devready:
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret
+  seed:
+    enabled: false
+  sessions:
+    # O agendador não roda sozinho nos testes: quem corrige a sessão no teste do listener é o
+    # listener, e o teste do agendador chama a rodada à mão.
+    expiry-delay-ms: 3600000
+spring:
+  flyway:
+    enabled: true

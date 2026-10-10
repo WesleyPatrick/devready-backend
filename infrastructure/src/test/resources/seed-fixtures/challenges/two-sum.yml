@@ -1,0 +1,57 @@
+slug: two-sum
+title: Soma de dois números
+area: backend
+level: junior
+difficulty: easy
+tags: [arrays]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: unordered
+statement: |
+  Dado um array de inteiros `nums` e um inteiro `target`, devolva os índices dos dois números cuja soma é `target`.
+approachSummary: |
+  Um mapa de valor para índice resolve em uma passada.
+languages:
+  java:
+    functionName: twoSum
+    starterCode: |
+      class Solution {
+          public int[] twoSum(int[] nums, int target) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.*;
+      class Solution {
+          public int[] twoSum(int[] nums, int target) {
+              Map<Integer, Integer> seen = new HashMap<>();
+              for (int i = 0; i < nums.length; i++) {
+                  Integer j = seen.get(target - nums[i]);
+                  if (j != null) return new int[]{j, i};
+                  seen.put(nums[i], i);
+              }
+              return new int[0];
+          }
+      }
+  python:
+    functionName: two_sum
+    starterCode: |
+      class Solution:
+          def two_sum(self, nums, target):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def two_sum(self, nums, target):
+              seen = {}
+              for i, n in enumerate(nums):
+                  if target - n in seen:
+                      return [seen[target - n], i]
+                  seen[n] = i
+              return []
+testCases:
+  - { args: [[2, 7, 11, 15], 9], expected: [0, 1], visible: true }
+  - { args: [[3, 2, 4], 6], expected: [1, 2], visible: true }
+  - { args: [[3, 3], 6], expected: [0, 1], visible: false }
+  - { args: [[1, 5, 9], 14], expected: [1, 2], visible: false }

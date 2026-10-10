@@ -1,0 +1,108 @@
+slug: min-meeting-rooms
+title: Salas de reunião necessárias
+area: backend
+level: senior
+difficulty: medium
+tags: [arrays, algoritmos, complexidade]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe `intervals`, uma lista de reuniões em que cada item é `[inicio, fim]` (com `inicio < fim`). Devolva o menor número de salas necessário para realizar todas as reuniões sem sobreposição dentro da mesma sala.
+
+  Uma reunião que termina no instante `t` libera a sala para outra que começa em `t`: `[0, 5]` e `[5, 10]` cabem na mesma sala. A lista pode vir fora de ordem e pode ser vazia (resposta `0`). Limites: `0 <= n <= 10000` reuniões e `0 <= inicio < fim <= 1000000`.
+
+  Exemplo: para `intervals = [[0, 30], [5, 10], [15, 20]]`, a resposta é `2`.
+approachSummary: |
+  Comparar cada reunião com todas as outras custa O(n²). A solução esperada separa os inícios e os fins em dois arrays e ordena cada um. Percorra os inícios: se o início atual é menor que o menor fim ainda não liberado, é preciso uma sala nova; senão, a sala daquele fim é reaproveitada (avance o ponteiro dos fins). O número de salas é o máximo de reuniões simultâneas. Tempo O(n log n) pela ordenação, memória O(n). Uma min-heap de fins dá a mesma complexidade.
+languages:
+  java:
+    functionName: minMeetingRooms
+    starterCode: |
+      class Solution {
+          public int minMeetingRooms(int[][] intervals) {
+              // sua solução
+              return 0;
+          }
+      }
+    referenceSolution: |
+      import java.util.Arrays;
+
+      class Solution {
+          public int minMeetingRooms(int[][] intervals) {
+              int n = intervals.length;
+              int[] starts = new int[n];
+              int[] ends = new int[n];
+              for (int i = 0; i < n; i++) {
+                  starts[i] = intervals[i][0];
+                  ends[i] = intervals[i][1];
+              }
+              Arrays.sort(starts);
+              Arrays.sort(ends);
+              int rooms = 0;
+              int e = 0;
+              for (int i = 0; i < n; i++) {
+                  if (starts[i] < ends[e]) {
+                      rooms++;
+                  } else {
+                      e++;
+                  }
+              }
+              return rooms;
+          }
+      }
+  python:
+    functionName: min_meeting_rooms
+    starterCode: |
+      class Solution:
+          def min_meeting_rooms(self, intervals):
+              # sua solução
+              return 0
+    referenceSolution: |
+      class Solution:
+          def min_meeting_rooms(self, intervals):
+              starts = sorted(iv[0] for iv in intervals)
+              ends = sorted(iv[1] for iv in intervals)
+              rooms = 0
+              e = 0
+              for s in starts:
+                  if s < ends[e]:
+                      rooms += 1
+                  else:
+                      e += 1
+              return rooms
+  javascript:
+    functionName: minMeetingRooms
+    starterCode: |
+      class Solution {
+        minMeetingRooms(intervals) {
+          // sua solução
+          return 0;
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        minMeetingRooms(intervals) {
+          const starts = intervals.map((iv) => iv[0]).sort((a, b) => a - b);
+          const ends = intervals.map((iv) => iv[1]).sort((a, b) => a - b);
+          let rooms = 0;
+          let e = 0;
+          for (let i = 0; i < starts.length; i++) {
+            if (starts[i] < ends[e]) {
+              rooms++;
+            } else {
+              e++;
+            }
+          }
+          return rooms;
+        }
+      }
+testCases:
+  - { args: [[[0, 30], [5, 10], [15, 20]]], expected: 2, visible: true }
+  - { args: [[[7, 10], [2, 4]]], expected: 1, visible: true }
+  - { args: [[]], expected: 0, visible: false }
+  - { args: [[[1, 5]]], expected: 1, visible: false }
+  - { args: [[[0, 5], [5, 10], [10, 15]]], expected: 1, visible: false }
+  - { args: [[[1, 10], [2, 9], [3, 8], [4, 7]]], expected: 4, visible: false }
+  - { args: [[[9, 10], [4, 9], [4, 17]]], expected: 2, visible: false }
+  - { args: [[[13, 15], [1, 13], [6, 9], [2, 6], [3, 8]]], expected: 3, visible: false }

@@ -1,0 +1,182 @@
+area: backend
+level: junior
+questions:
+  - slug: backend-junior-http-idempotency
+    title: "Idempotência dos métodos HTTP"
+    difficulty: easy
+    statement: |
+      Em uma API REST, qual destes métodos HTTP é idempotente por definição, ou seja, repetir a mesma requisição várias vezes deixa o servidor no mesmo estado que uma única chamada?
+    options:
+      - text: POST, porque cria recursos de forma controlada
+      - text: PUT, porque substitui o recurso inteiro pelo corpo enviado
+        correct: true
+      - text: PATCH, porque aplica só a diferença
+      - text: Nenhum método HTTP é idempotente; isso depende da implementação
+    explanation: |
+      PUT envia a representação completa do recurso; enviar a mesma representação dez vezes produz o mesmo estado final. POST não tem essa garantia (cada chamada pode criar um recurso novo) e PATCH só é idempotente se a operação descrita for, o que a especificação não exige.
+    tags: [http, rest]
+
+  - slug: backend-junior-sql-inner-join
+    title: "Pedidos só com cliente cadastrado"
+    difficulty: easy
+    statement: |
+      Considere as tabelas `pedidos` e `clientes`. Você quer listar apenas os pedidos que têm um cliente cadastrado, com o nome do cliente ao lado. Qual junção usar?
+    options:
+      - text: LEFT JOIN de pedidos com clientes
+      - text: INNER JOIN de pedidos com clientes
+        correct: true
+      - text: CROSS JOIN, filtrando depois no WHERE
+      - text: UNION das duas tabelas
+    explanation: |
+      INNER JOIN devolve só as linhas que casam nos dois lados, que é exatamente "pedidos que têm cliente". LEFT JOIN manteria pedidos sem cliente (com colunas nulas), CROSS JOIN gera o produto cartesiano e UNION empilha resultados, não relaciona tabelas.
+    tags: [sql, banco-de-dados]
+
+  - slug: backend-junior-http-401-vs-403
+    title: "401 versus 403"
+    difficulty: medium
+    statement: |
+      Um usuário autenticado, com um token válido, tenta acessar uma rota exclusiva de administradores sem ter esse papel. Qual status HTTP a API deve devolver?
+    options:
+      - text: 401 Unauthorized, porque o acesso não foi autorizado
+      - text: 400 Bad Request, porque a requisição não deveria ter sido feita
+      - text: 403 Forbidden, porque a identidade é conhecida mas não tem permissão
+        correct: true
+      - text: 500 Internal Server Error, porque a autorização falhou no servidor
+    explanation: |
+      403 é a resposta para "sei quem você é, mas você não pode fazer isso": repetir a requisição com o mesmo usuário não muda o resultado. O 401 é a pegadinha: apesar do nome, ele significa que faltam credenciais válidas (problema de autenticação), e o cliente deveria se autenticar de novo. 400 indica requisição malformada e 500 indica falha inesperada do servidor, nenhum dos dois é o caso.
+    tags: [http, autenticacao]
+
+  - slug: backend-junior-sql-index
+    title: "Busca por email ficou lenta"
+    difficulty: medium
+    statement: |
+      A consulta `SELECT * FROM usuarios WHERE email = ?` ficou lenta depois que a tabela passou de um milhão de linhas. Qual é a primeira medida mais indicada?
+    options:
+      - text: Trocar o `=` por `LIKE`, que é otimizado para textos
+      - text: Adicionar `ORDER BY email` para o banco achar a linha mais rápido
+      - text: Aumentar o pool de conexões da aplicação
+      - text: Criar um índice na coluna `email`
+        correct: true
+    explanation: |
+      Sem índice, o banco precisa ler a tabela inteira (varredura sequencial) para achar o e-mail. Um índice, em geral uma árvore B, permite localizar a linha em tempo logarítmico; o custo é um pouco mais de espaço e escritas levemente mais lentas. ORDER BY acrescenta uma ordenação sem reduzir as linhas lidas, LIKE não é mais rápido que a igualdade e mais conexões não diminuem o custo de cada consulta.
+    tags: [sql, banco-de-dados]
+
+  - slug: backend-junior-sql-foreign-key
+    title: "Chave estrangeira inexistente no insert"
+    difficulty: easy
+    statement: |
+      Na tabela `pedidos`, a coluna `cliente_id` referencia `clientes(id)` por meio de uma chave estrangeira. O que acontece ao tentar inserir um pedido com um `cliente_id` que não existe em `clientes`?
+    options:
+      - text: O banco rejeita a inserção por violar a integridade referencial
+        correct: true
+      - text: O banco insere o pedido e cria um cliente vazio automaticamente
+      - text: O banco insere o pedido trocando o `cliente_id` por nulo
+      - text: A inserção funciona, porque a chave estrangeira só serve para acelerar joins
+    explanation: |
+      A chave estrangeira é uma restrição: todo valor da coluna precisa existir na tabela referenciada, e o banco recusa a operação com erro de violação de chave estrangeira. Ela não cria registros nem troca valores por nulo. Também não é um recurso de desempenho; em bancos como o PostgreSQL, a coluna que referencia nem ganha índice automaticamente.
+    tags: [sql, banco-de-dados]
+
+  - slug: backend-junior-java-equals-hashcode
+    title: "equals sem hashCode em HashMap"
+    difficulty: hard
+    statement: |
+      Você sobrescreveu `equals` na classe `Cpf` para comparar pelo número, mas esqueceu de sobrescrever `hashCode`. O que tende a acontecer ao usar objetos `Cpf` como chave de um `HashMap`?
+    options:
+      - text: Nada muda, porque o `HashMap` compara as chaves apenas com `equals`
+      - text: O código deixa de compilar, porque `equals` e `hashCode` precisam vir juntos
+      - text: Buscas por um CPF igual podem falhar, porque cada objeto cai num balde diferente
+        correct: true
+      - text: O `HashMap` lança uma exceção ao inserir uma segunda chave igual à primeira
+    explanation: |
+      O `HashMap` usa primeiro o `hashCode` para escolher o balde e só depois compara com `equals` dentro dele. O `hashCode` herdado de `Object` depende da identidade do objeto, então dois `Cpf` iguais por `equals` geram hashes diferentes e o `get` procura no balde errado. Por isso o contrato exige: objetos iguais por `equals` devem ter o mesmo `hashCode`. O código compila normalmente, e é isso que torna o erro traiçoeiro.
+    tags: [java, hash-map]
+
+  - slug: backend-junior-java-checked-exceptions
+    title: "Exceção verificada ou não verificada"
+    difficulty: easy
+    statement: |
+      Em Java, qual é a diferença prática entre uma exceção verificada (checked), como `IOException`, e uma não verificada, como `IllegalArgumentException`?
+    options:
+      - text: As verificadas não podem ser capturadas com `catch`, só propagadas
+      - text: As não verificadas só acontecem em tempo de compilação, não em execução
+      - text: As verificadas são mais rápidas, porque o compilador já as conhece de antemão
+      - text: As verificadas precisam ser tratadas ou declaradas com `throws`; as outras, não
+        correct: true
+    explanation: |
+      A diferença é uma regra do compilador: quem chama um método que lança uma exceção verificada precisa capturá-la ou declará-la no `throws`. Exceções que estendem `RuntimeException` (ou `Error`) dispensam isso e costumam indicar erro de programação ou de uso. As duas acontecem em tempo de execução e as duas podem ser capturadas; não há diferença de desempenho entre elas.
+    tags: [java]
+
+  - slug: backend-junior-spring-constructor-injection
+    title: "Injeção por construtor no Spring"
+    difficulty: medium
+    statement: |
+      Num projeto Spring, por que a injeção de dependências pelo construtor costuma ser preferida à injeção por campo com `@Autowired`?
+    options:
+      - text: Porque é a única forma de injeção que o Spring ainda suporta
+      - text: Porque deixa as dependências explícitas e facilita criar a classe em testes
+        correct: true
+      - text: Porque dispensa anotar a classe com `@Service` ou `@Component`
+      - text: Porque faz o Spring criar uma instância nova da dependência a cada chamada
+    explanation: |
+      Com o construtor, a classe não existe sem as dependências: elas ficam visíveis na assinatura, podem ser `final` e o teste unitário cria o objeto com `new`, passando dublês. A injeção por campo continua funcionando, então não é questão de suporte; ela só esconde as dependências e obriga reflexão ou o contêiner para testar. A forma de injeção também não muda o escopo do bean, que continua singleton por padrão.
+    tags: [spring, arquitetura]
+
+  - slug: backend-junior-orm-n-plus-one
+    title: "Cem consultas para listar cem pedidos"
+    difficulty: hard
+    statement: |
+      Uma tela lista 100 pedidos e mostra o nome do cliente de cada um. No log, você vê uma consulta para buscar os pedidos e mais 100 consultas, uma por cliente. Qual é o problema e a correção mais comum?
+    options:
+      - text: Deadlock; aumentar o tempo limite da transação no banco
+      - text: Falta de índice; criar um índice na coluna `pedidos.id`
+      - text: Problema N+1; buscar os clientes junto, com `JOIN FETCH`
+        correct: true
+      - text: Cache frio; dar mais memória para o cache do ORM
+    explanation: |
+      É o problema N+1: a consulta traz só os pedidos, e cada cliente é carregado depois por uma consulta separada, seja porque a associação é preguiçosa e é acessada item a item, seja porque o ORM completa a associação um registro por vez. Buscar tudo de uma vez, com `JOIN FETCH`, um entity graph ou uma consulta de projeção, resolve em uma ida ao banco. O índice em `pedidos.id` já existe por ser chave primária e não reduz o número de consultas; o gargalo aqui é a quantidade de idas ao banco, não a velocidade de cada uma.
+    tags: [orm, banco-de-dados]
+
+  - slug: backend-junior-password-hashing
+    title: "Armazenamento seguro de senhas"
+    difficulty: medium
+    statement: |
+      Ao implementar o cadastro com senha, como a senha do usuário deve ser armazenada no banco de dados?
+    options:
+      - text: Em texto puro, numa coluna com acesso restrito
+      - text: Criptografada com AES, para poder ser recuperada se o usuário esquecer
+      - text: Com um hash SHA-256 simples, que é rápido de calcular
+      - text: Com um hash de algoritmo lento e com sal, como BCrypt ou Argon2
+        correct: true
+    explanation: |
+      Senha não deve ser recuperável: guarda-se um hash e, no login, compara-se o hash da senha digitada. Algoritmos como BCrypt e Argon2 são lentos de propósito e usam sal aleatório, o que torna ataques de força bruta caros e inutiliza tabelas pré-calculadas. O SHA-256 é a pegadinha: é um hash, mas rápido demais, e sem sal senhas iguais geram hashes iguais. Criptografia reversível significa que quem obtiver a chave obtém todas as senhas.
+    tags: [seguranca, autenticacao]
+
+  - slug: backend-junior-unit-test-doubles
+    title: "Teste unitário do `CadastroService`"
+    difficulty: medium
+    statement: |
+      Você quer escrever um teste unitário para `CadastroService`, que usa um `UsuarioRepository` para salvar no banco. Qual abordagem mantém o teste unitário?
+    options:
+      - text: Trocar o repositório por um dublê (fake ou mock) no teste
+        correct: true
+      - text: Subir o banco real e a aplicação inteira antes de cada teste
+      - text: Testar só o repositório, já que o serviço apenas o chama
+      - text: Deixar o serviço sem teste e confiar nos testes manuais
+    explanation: |
+      O teste unitário isola a unidade: com um dublê no lugar do repositório, o teste roda em milissegundos e verifica só as regras do serviço, como validar dados ou recusar e-mail repetido. Subir banco e aplicação vira teste de integração, útil em outro nível, mas mais lento e com mais motivos para falhar. Testar só o repositório deixa de fora justamente as regras que moram no serviço.
+    tags: [testes]
+
+  - slug: backend-junior-git-revert
+    title: "Commit com bug já na main"
+    difficulty: medium
+    statement: |
+      Um commit com bug já foi enviado para a branch `main`, que o time inteiro usa. Qual comando desfaz o efeito desse commit sem reescrever o histórico compartilhado?
+    options:
+      - text: "`git reset --hard HEAD~1` seguido de `git push --force`"
+      - text: "`git revert` com o hash do commit"
+        correct: true
+      - text: "`git checkout` com o hash do commit"
+      - text: "`git commit --amend` na `main`"
+    explanation: |
+      `git revert` cria um commit novo que aplica o inverso das mudanças, então o histórico só cresce e quem já baixou a `main` continua sincronizado. `reset --hard` com `push --force` apaga o commit do histórico remoto e quebra o repositório local dos colegas. `checkout` só muda sua cópia local (HEAD e árvore de trabalho), sem desfazer nada no remoto, e `--amend` reescreve o último commit.
+    tags: [git]

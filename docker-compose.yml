@@ -1,0 +1,92 @@
+name: devready
+
+# As portas ficam presas em 127.0.0.1: numa rede compartilhada, ninguém de fora alcança o banco,
+# o Redis (onde ficam os refresh tokens) nem o RabbitMQ com as senhas de desenvolvimento.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: devready
+      POSTGRES_USER: devready
+      POSTGRES_PASSWORD: devready
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devready -d devready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: devready
+      RABBITMQ_DEFAULT_PASS: devready
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Judge0 fica atrás de um profile porque consome bastante memória; só o worker fala com ele.
+  # A imagem só existe para amd64: no Mac ela roda emulada.
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    platform: linux/amd64
+    profiles: ["judge0"]
+    volumes:
+      - ./docker/judge0/judge0.conf:/judge0.conf:ro
+    ports:
+      - "127.0.0.1:2358:2358"
+    privileged: true
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    platform: linux/amd64
+    profiles: ["judge0"]
+    command: ["./scripts/workers"]
+    volumes:
+      - ./docker/judge0/judge0.conf:/judge0.conf:ro
+    privileged: true
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-db:
+    image: postgres:16.2
+    profiles: ["judge0"]
+    env_file: ./docker/judge0/judge0.conf
+    volumes:
+      - judge0-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  judge0-redis:
+    image: redis:7.2.4
+    profiles: ["judge0"]
+    command: ["bash", "-c", "docker-entrypoint.sh --appendonly no --requirepass \"$$REDIS_PASSWORD\""]
+    env_file: ./docker/judge0/judge0.conf
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  judge0-data:

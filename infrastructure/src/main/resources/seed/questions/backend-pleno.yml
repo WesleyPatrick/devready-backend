@@ -1,0 +1,182 @@
+area: backend
+level: pleno
+questions:
+  - slug: backend-pleno-transaction-isolation
+    title: "Leitura não repetível na transação"
+    difficulty: medium
+    statement: |
+      Dentro de uma mesma transação, você lê o saldo de uma conta duas vezes e recebe valores diferentes, porque outra transação confirmou uma atualização entre as duas leituras. Segundo o padrão SQL, qual é o menor nível de isolamento que impede essa anomalia (leitura não repetível)?
+    options:
+      - text: READ UNCOMMITTED, que bloqueia a leitura de dados ainda não confirmados
+      - text: READ COMMITTED, que garante enxergar apenas dados já confirmados
+      - text: REPEATABLE READ, que mantém a leitura estável durante a transação
+        correct: true
+      - text: SERIALIZABLE, o único nível que impede essa anomalia
+    explanation: |
+      No READ COMMITTED cada comando enxerga o que já foi confirmado até aquele momento, então a segunda leitura vê o valor novo; ele só evita a leitura suja, e é o padrão em vários bancos. No padrão SQL, o REPEATABLE READ garante que uma linha já lida não mude até o fim da transação; em bancos com MVCC, como o PostgreSQL, isso vem de uma foto dos dados tirada no início da transação. O READ UNCOMMITTED nem evita a leitura suja. O SERIALIZABLE também impede a anomalia, mas é mais caro e vai além do necessário, então não é o menor nível que resolve.
+    tags: [sql, banco-de-dados]
+
+  - slug: backend-pleno-optimistic-locking
+    title: "Dois atendentes editando a mesma ficha"
+    difficulty: medium
+    statement: |
+      Dois atendentes abrem a mesma ficha de cliente, cada um altera um campo diferente e salva. O último a salvar apaga, sem aviso, a alteração do primeiro (atualização perdida). A tela de edição tem pouca disputa. Qual é a solução mais adequada?
+    options:
+      - text: Lock otimista com coluna de versão; o segundo salvamento falha e é tratado
+        correct: true
+      - text: Marcar o método de serviço como `synchronized` para serializar os salvamentos
+      - text: Lock pessimista com `SELECT ... FOR UPDATE` desde o momento em que a ficha é aberta na tela
+      - text: Subir o isolamento para SERIALIZABLE, que impede qualquer conflito entre as duas edições
+    explanation: |
+      Com uma coluna de versão (por exemplo `@Version` no JPA), o `UPDATE` só vale se a versão ainda for a lida; se outra pessoa salvou antes, o segundo salvamento falha e a aplicação decide se recarrega ou avisa o usuário. O `synchronized` só vale dentro de uma JVM, e a aplicação costuma ter várias instâncias. Segurar um lock de linha enquanto uma pessoa edita na tela prende o banco por minutos e trava os demais. O SERIALIZABLE não ajuda, porque a leitura (abrir a ficha) e a gravação (salvar) acontecem em requisições e transações diferentes; o banco não sabe que uma depende da outra.
+    tags: [orm, banco-de-dados]
+
+  - slug: backend-pleno-concurrent-map-check-then-act
+    title: "Contador no ConcurrentHashMap"
+    difficulty: medium
+    statement: |
+      Um contador de acessos por usuário usa um `ConcurrentHashMap<String, Integer>` e atualiza assim: lê o valor com `get`, soma 1 e grava com `put`. Sob carga, a contagem final fica menor que o número real de acessos. Qual é a causa e a correção?
+    options:
+      - text: O mapa não é seguro para várias threads; trocar por `Hashtable` resolve
+      - text: A causa é visibilidade de memória; declarar o mapa como `volatile` resolve
+      - text: O `Integer` é imutável e perde o valor; usar um `int[]` como valor resolve
+      - text: Ler e depois gravar não é atômico; usar `merge(id, 1, Integer::sum)`
+        correct: true
+    explanation: |
+      Cada operação do `ConcurrentHashMap` é segura sozinha, mas a sequência "ler, calcular, gravar" não é: duas threads leem o mesmo valor e uma sobrescreve a soma da outra (check-then-act). Os métodos atômicos como `merge`, `compute` e `computeIfAbsent` fazem a leitura e a gravação como um passo só. O `Hashtable` tem o mesmo problema nessa sequência, `volatile` na referência do mapa não torna atômica a atualização dos valores, e trocar o valor por um `int[]` só moveria a corrida para dentro do array.
+    tags: [java, hash-map]
+
+  - slug: backend-pleno-cache-stampede
+    title: "Chave quente que expira e derruba o banco"
+    difficulty: hard
+    statement: |
+      Um endpoint muito acessado guarda o resultado de uma consulta cara em cache, com TTL de 60 segundos (cache-aside). Toda vez que a chave expira, o banco recebe centenas de consultas idênticas ao mesmo tempo e chega a ficar lento. Qual medida ataca a causa?
+    options:
+      - text: Aumentar o TTL para 24 horas, aceitando dados mais velhos sem mudar o resto
+      - text: Deixar só uma requisição recalcular, e as outras esperam ou usam o valor antigo
+        correct: true
+      - text: Dar mais memória ao cache para a chave nunca ser removida antes da hora
+      - text: Ler direto do banco sempre que o cache demorar mais que alguns milissegundos
+    explanation: |
+      O problema é a debandada de cache (cache stampede): no instante da expiração, todas as requisições percebem a ausência ao mesmo tempo e recalculam em paralelo. Um lock por chave (ou single-flight), servir o valor antigo enquanto um só worker atualiza, ou renovar a chave um pouco antes de expirar evitam isso. Quando muitas chaves são criadas juntas, um pequeno aleatório no TTL (jitter) também evita que expirem ao mesmo tempo. Um TTL maior só espaça as expirações, e a próxima ainda provoca a debandada. Mais memória não ajuda, pois a chave sai por expiração e não por falta de espaço. Cair para o banco quando o cache está lento piora a carga justamente onde ela já é o gargalo.
+    tags: [cache]
+
+  - slug: backend-pleno-keyset-pagination
+    title: "Paginação lenta nas últimas páginas"
+    difficulty: medium
+    statement: |
+      Uma listagem de pedidos usa `ORDER BY criado_em DESC LIMIT 20 OFFSET n`. Nas páginas finais, com offset de milhões, a consulta fica lenta, e com pedidos novos entrando durante a navegação alguns itens aparecem repetidos. Qual alternativa resolve os dois problemas?
+    options:
+      - text: Criar um índice na coluna `id` e manter o `OFFSET`, que então fica rápido
+      - text: Carregar todos os pedidos na memória e paginar na própria aplicação
+      - text: Paginação por cursor (keyset), filtrando pelo último `(criado_em, id)` visto
+        correct: true
+      - text: Subir o `LIMIT` para 1000 e deixar o cliente descartar o que não quer
+    explanation: |
+      Com `OFFSET`, o banco ainda percorre e descarta todas as linhas puladas, então o custo cresce com a página; e, como a posição é contada em linhas, uma inserção nova desloca tudo e repete itens. Na paginação por cursor a consulta usa `WHERE (criado_em, id) < (?, ?)` com um índice nessas colunas, partindo direto do ponto onde parou, com custo estável e sem repetição. O `id` entra para desempatar datas iguais. Um índice no `id` não ajuda a pular linhas, carregar tudo em memória não escala e um `LIMIT` enorme só transfere o desperdício para a rede.
+    tags: [sql, banco-de-dados, complexidade]
+
+  - slug: backend-pleno-composite-index-order
+    title: "Ordem das colunas no índice composto"
+    difficulty: medium
+    statement: |
+      A consulta `SELECT * FROM pedidos WHERE status = 'PAGO' AND criado_em >= ? ORDER BY criado_em` roda o tempo todo e a tabela é grande. Qual índice atende melhor tanto o filtro quanto a ordenação?
+    options:
+      - text: Índice composto em `(status, criado_em)`
+        correct: true
+      - text: Índice composto em `(criado_em, status)`
+      - text: Dois índices separados, um em `status` e outro em `criado_em`
+      - text: Um índice só em `status`, porque ele já elimina a maior parte das linhas
+    explanation: |
+      Num índice composto, a igualdade vem primeiro e a faixa depois: com `(status, criado_em)` o banco vai direto ao grupo `PAGO`, percorre a faixa de datas e já encontra as linhas na ordem pedida, sem ordenar. Com `(criado_em, status)` ele varre a faixa de datas inteira, de todos os status, e filtra depois. Dois índices separados obrigam a combinar os resultados e a ordenar. Um índice só em `status` ajuda no filtro, mas deixa a faixa de datas e a ordenação por conta de uma leitura e de um sort extras.
+    tags: [sql, banco-de-dados]
+
+  - slug: backend-pleno-test-transaction-rollback
+    title: "Teste que passa e produção que falha"
+    difficulty: hard
+    statement: |
+      Um teste de integração Spring, anotado com `@Transactional`, salva uma entidade com um campo obrigatório nulo, chama o serviço e passa. Em produção, a mesma operação falha com violação de `NOT NULL`. O que explica a diferença?
+    options:
+      - text: O banco do teste ignora restrições NOT NULL por padrão, ao contrário do de produção
+      - text: O `@Transactional` do teste desliga o Bean Validation durante a execução do serviço
+      - text: O serviço roda em outra thread durante o teste e por isso o erro não volta ao teste
+      - text: A transação do teste termina em rollback e, sem `flush`, o INSERT pode nem ir ao banco
+        correct: true
+    explanation: |
+      O Hibernate adia o SQL até o `flush` (a não ser que o id venha de uma coluna IDENTITY, que obriga o INSERT na hora), e a transação do teste é desfeita no final, então o `INSERT` pode nunca ser enviado e a restrição nunca é exercitada. Em produção, o commit força o flush e o banco rejeita. Para o teste pegar o erro, chame `flush()` explicitamente ou rode o fluxo sem a transação do teste, confirmando de verdade. Os outros motivos não se sustentam: os bancos de teste comuns aplicam NOT NULL, o `@Transactional` não desliga validação e o serviço, por padrão, roda na thread do teste.
+    tags: [testes, spring]
+
+  - slug: backend-pleno-idempotent-consumer
+    title: "Pontos em dobro após reentrega"
+    difficulty: hard
+    statement: |
+      Um consumidor de fila com entrega "ao menos uma vez" credita pontos ao cliente a cada mensagem `PedidoPago`. Depois de uma reentrega, o cliente ganhou pontos em dobro. Qual desenho garante que reprocessar a mesma mensagem não duplica o efeito?
+    options:
+      - text: Consultar se o id já foi processado e, em outra transação, creditar e registrar o id
+      - text: Gravar o id da mensagem com chave única na mesma transação do crédito
+        correct: true
+      - text: Confirmar (ack) a mensagem antes de processar, para o broker nunca reenviar
+      - text: Rodar uma só instância do consumidor, o que elimina qualquer reentrega
+    explanation: |
+      O consumidor idempotente guarda o id da mensagem com restrição de unicidade e faz isso na mesma transação do efeito: ou os dois acontecem, ou nenhum, e uma duplicata esbarra na chave única. Consultar antes e gravar depois, em transações separadas, deixa uma janela em que duas entregas passam juntas pela consulta. Confirmar antes de processar troca a duplicata por perda, pois uma falha no meio perde a mensagem. E uma instância só não evita a reentrega: o broker reenvia quando o ack se perde ou demora.
+    tags: [mensageria]
+
+  - slug: backend-pleno-ack-after-processing
+    title: "Queda entre gravar e confirmar a mensagem"
+    difficulty: easy
+    statement: |
+      Um consumidor só confirma (ack) a mensagem depois de gravar o resultado no banco. Se o processo cair exatamente entre a gravação e o ack, o que acontece com essa mensagem?
+    options:
+      - text: Ela é perdida, pois o broker já a considera entregue
+      - text: Ela é entregue exatamente uma vez, pois o ack é transacional com o banco
+      - text: Ela é reentregue e processada de novo
+        correct: true
+      - text: Ela vai direto para a fila de mensagens mortas, sem nova tentativa
+    explanation: |
+      Sem o ack, o broker entende que a entrega falhou e reenvia a mensagem, inclusive para outra instância. Esse é o comportamento "ao menos uma vez": nada se perde, mas pode haver duplicata, e por isso o consumidor precisa ser idempotente. A mensagem só seria perdida se o ack fosse enviado antes do processamento. O ack não participa da transação do banco, e a fila de mensagens mortas só recebe a mensagem depois de várias tentativas fracassadas.
+    tags: [mensageria]
+
+  - slug: backend-pleno-api-versioning-breaking-change
+    title: "Mudar o formato de um campo público"
+    difficulty: medium
+    statement: |
+      Sua API pública precisa mudar o campo `valor`, que hoje é um número, para um objeto com valor e moeda, no próprio campo `valor` (o contrato novo não pode manter o número). Existem aplicativos móveis antigos que demoram semanas para atualizar. Qual é a abordagem mais segura?
+    options:
+      - text: Publicar uma nova versão (`/v2`) e manter a antiga ativa durante a migração
+        correct: true
+      - text: Alterar o campo na versão atual e avisar os clientes por e-mail
+      - text: Versionar por cabeçalho e servir o formato novo quando o cliente não manda o cabeçalho
+      - text: Remover a versão antiga assim que a nova sair, para não manter dois códigos
+    explanation: |
+      Trocar o tipo de um campo é uma mudança incompatível: quem consome o formato antigo quebra. A saída segura é expor o novo contrato numa versão nova, manter a anterior por um prazo de migração anunciado e só então desligá-la, acompanhando o uso. Avisar por e-mail e mudar no lugar quebra os aplicativos que não atualizaram. Versionar por cabeçalho e assumir o formato novo na ausência dele quebra justamente os aplicativos antigos, que não mandam cabeçalho nenhum. Desligar a versão antiga de imediato tem o mesmo efeito da mudança no lugar, só que de forma mais explícita. Quando dá para manter `valor` e acrescentar um campo novo ao lado, essa mudança aditiva nem precisa de versão nova; aqui o próprio campo muda de tipo.
+    tags: [rest, http]
+
+  - slug: backend-pleno-rate-limit-response
+    title: "Resposta ao estourar o limite de requisições"
+    difficulty: easy
+    statement: |
+      Uma API aplica um limite de requisições por cliente. Quando um cliente passa do limite, qual é a resposta mais adequada?
+    options:
+      - text: 403 Forbidden, porque o cliente perdeu a permissão de usar a API por um tempo
+      - text: 500 Internal Server Error, porque o servidor se recusou a processar o pedido
+      - text: 503 Service Unavailable, porque a API fica indisponível para todos os clientes
+      - text: 429 Too Many Requests, com `Retry-After` dizendo quando tentar de novo
+        correct: true
+    explanation: |
+      O 429 existe para esse caso: o cliente está identificado e permitido, mas enviou requisições demais num período. O cabeçalho `Retry-After` (ou campos próprios de limite restante) permite que ele espere o tempo certo em vez de insistir. O 403 diz que o cliente não tem permissão, o que não é verdade; o 500 indica falha do servidor, e o cliente poderia tentar de novo sem parar; e o 503 diz que o serviço inteiro está fora, quando só esse cliente passou do limite.
+    tags: [http, rest]
+
+  - slug: backend-pleno-idor-object-authorization
+    title: "Trocar o id na URL e ver o pedido de outro"
+    difficulty: medium
+    statement: |
+      A rota `GET /api/pedidos/{id}` exige um token válido e devolve o pedido. Um usuário autenticado troca o id na URL e passa a ver pedidos de outros clientes. Qual é a falha e a correção?
+    options:
+      - text: Falha de autenticação; exigir um token com expiração mais curta
+      - text: Falha de autorização por objeto (IDOR); checar no servidor o dono do pedido
+        correct: true
+      - text: Falha de CORS; restringir as origens permitidas a quem pode chamar a API
+      - text: Falha de enumeração; trocar os ids sequenciais por UUIDs resolve de vez
+    explanation: |
+      O usuário está autenticado, então o problema não é de identidade: falta checar se ele pode acessar aquele objeto (referência direta insegura a objeto, IDOR, ou BOLA na terminologia de APIs). A correção é consultar o pedido já filtrando pelo dono, ou comparar o dono com o usuário do token, em toda rota que recebe um id. O CORS é uma política do navegador e não protege a API de chamadas diretas. Trocar por UUIDs dificulta adivinhar ids, mas não resolve: quem obtiver um id válido continua vendo o pedido.
+    tags: [seguranca, autenticacao]

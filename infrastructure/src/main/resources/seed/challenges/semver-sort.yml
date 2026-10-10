@@ -1,0 +1,207 @@
+slug: semver-sort
+title: Ordenar versões semânticas
+area: devops
+level: pleno
+difficulty: medium
+tags: [ci-cd, strings, algoritmos]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe uma lista de versões no formato `MAJOR.MINOR.PATCH`, com um pré-lançamento opcional depois de um hífen, como `1.4.0-beta.2`. Devolva a lista em ordem crescente de precedência, segundo o SemVer 2.0:
+
+  - compare `MAJOR`, depois `MINOR`, depois `PATCH`, **como números** (`1.10.0` vem depois de `1.2.0`);
+  - com o mesmo `MAJOR.MINOR.PATCH`, uma versão **com** pré-lançamento vem antes da versão sem ele (`1.0.0-rc.1 < 1.0.0`);
+  - entre dois pré-lançamentos, compare os identificadores separados por ponto, da esquerda para a direita: identificadores numéricos são comparados como números; identificadores com letras são comparados em ordem alfabética (ASCII); um identificador numérico vem antes de um alfanumérico; se todos os comuns forem iguais, o pré-lançamento com **menos** identificadores vem antes (`1.0.0-alpha < 1.0.0-alpha.1`).
+
+  As versões são válidas: números sem zeros à esquerda, até 10^9, e no máximo 1000 versões. Não há metadados de build (`+...`). Versões iguais podem se repetir e devem ser mantidas. A lista pode estar vazia.
+
+  Exemplo: `["1.0.0", "1.0.0-rc.1", "0.9.0"]` produz `["0.9.0", "1.0.0-rc.1", "1.0.0"]`.
+approachSummary: |
+  Separe cada versão no primeiro hífen: o núcleo `MAJOR.MINOR.PATCH` vira três números e o resto vira a lista de identificadores do pré-lançamento. Escreva um comparador que olhe primeiro o núcleo, depois a ausência de pré-lançamento (que ganha), depois os identificadores um a um (número contra número, texto contra texto, número antes de texto) e, por fim, o tamanho da lista. Ordene com esse comparador: O(n log n) comparações, cada uma custando o tamanho da versão. O erro clássico é comparar as strings direto, o que põe `1.10.0` antes de `1.2.0` e `1.0.0-rc.1` depois de `1.0.0`.
+languages:
+  java:
+    functionName: sortVersions
+    starterCode: |
+      class Solution {
+          public String[] sortVersions(String[] versions) {
+              // sua solução
+              return versions;
+          }
+      }
+    referenceSolution: |
+      import java.util.Arrays;
+
+      class Solution {
+          public String[] sortVersions(String[] versions) {
+              String[] result = Arrays.copyOf(versions, versions.length);
+              Arrays.sort(result, (a, b) -> compareVersions(a, b));
+              return result;
+          }
+
+          private int compareNumbers(String a, String b) {
+              if (a.length() != b.length()) {
+                  return a.length() < b.length() ? -1 : 1;
+              }
+              return Integer.signum(a.compareTo(b));
+          }
+
+          private boolean isNumeric(String s) {
+              if (s.isEmpty()) {
+                  return false;
+              }
+              for (int i = 0; i < s.length(); i++) {
+                  if (s.charAt(i) < '0' || s.charAt(i) > '9') {
+                      return false;
+                  }
+              }
+              return true;
+          }
+
+          private int compareVersions(String a, String b) {
+              int dashA = a.indexOf('-');
+              int dashB = b.indexOf('-');
+              String coreA = dashA < 0 ? a : a.substring(0, dashA);
+              String coreB = dashB < 0 ? b : b.substring(0, dashB);
+              String[] partsA = coreA.split("\\.");
+              String[] partsB = coreB.split("\\.");
+              for (int i = 0; i < 3; i++) {
+                  int c = compareNumbers(partsA[i], partsB[i]);
+                  if (c != 0) {
+                      return c;
+                  }
+              }
+              if (dashA < 0 && dashB < 0) {
+                  return 0;
+              }
+              if (dashA < 0) {
+                  return 1;
+              }
+              if (dashB < 0) {
+                  return -1;
+              }
+              String[] preA = a.substring(dashA + 1).split("\\.");
+              String[] preB = b.substring(dashB + 1).split("\\.");
+              int common = Math.min(preA.length, preB.length);
+              for (int i = 0; i < common; i++) {
+                  boolean numA = isNumeric(preA[i]);
+                  boolean numB = isNumeric(preB[i]);
+                  int c;
+                  if (numA && numB) {
+                      c = compareNumbers(preA[i], preB[i]);
+                  } else if (numA) {
+                      c = -1;
+                  } else if (numB) {
+                      c = 1;
+                  } else {
+                      c = Integer.signum(preA[i].compareTo(preB[i]));
+                  }
+                  if (c != 0) {
+                      return c;
+                  }
+              }
+              return Integer.compare(preA.length, preB.length);
+          }
+      }
+  python:
+    functionName: sort_versions
+    starterCode: |
+      class Solution:
+          def sort_versions(self, versions):
+              # sua solução
+              return list(versions)
+    referenceSolution: |
+      import functools
+
+
+      class Solution:
+          def sort_versions(self, versions):
+              def split(version):
+                  core, _, pre = version.partition("-")
+                  numbers = [int(x) for x in core.split(".")]
+                  return numbers, (pre.split(".") if pre else None)
+
+              def compare_ids(a, b):
+                  a_num, b_num = a.isdigit(), b.isdigit()
+                  if a_num and b_num:
+                      a, b = int(a), int(b)
+                  elif a_num:
+                      return -1
+                  elif b_num:
+                      return 1
+                  return (a > b) - (a < b)
+
+              def compare(x, y):
+                  nx, px = split(x)
+                  ny, py = split(y)
+                  if nx != ny:
+                      return -1 if nx < ny else 1
+                  if px is None and py is None:
+                      return 0
+                  if px is None:
+                      return 1
+                  if py is None:
+                      return -1
+                  for a, b in zip(px, py):
+                      c = compare_ids(a, b)
+                      if c != 0:
+                          return c
+                  return (len(px) > len(py)) - (len(px) < len(py))
+
+              return sorted(versions, key=functools.cmp_to_key(compare))
+  javascript:
+    functionName: sortVersions
+    starterCode: |
+      class Solution {
+        sortVersions(versions) {
+          // sua solução
+          return versions.slice();
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        sortVersions(versions) {
+          const isNum = (s) => /^[0-9]+$/.test(s);
+          const sign = (n) => (n > 0 ? 1 : n < 0 ? -1 : 0);
+          const compareIds = (a, b) => {
+            const aNum = isNum(a);
+            const bNum = isNum(b);
+            if (aNum && bNum) return sign(Number(a) - Number(b));
+            if (aNum) return -1;
+            if (bNum) return 1;
+            return a < b ? -1 : a > b ? 1 : 0;
+          };
+          const split = (version) => {
+            const dash = version.indexOf("-");
+            const core = (dash < 0 ? version : version.slice(0, dash)).split(".").map(Number);
+            const pre = dash < 0 ? null : version.slice(dash + 1).split(".");
+            return { core, pre };
+          };
+          const compare = (x, y) => {
+            const a = split(x);
+            const b = split(y);
+            for (let i = 0; i < 3; i++) {
+              if (a.core[i] !== b.core[i]) return a.core[i] < b.core[i] ? -1 : 1;
+            }
+            if (a.pre === null && b.pre === null) return 0;
+            if (a.pre === null) return 1;
+            if (b.pre === null) return -1;
+            const common = Math.min(a.pre.length, b.pre.length);
+            for (let i = 0; i < common; i++) {
+              const c = compareIds(a.pre[i], b.pre[i]);
+              if (c !== 0) return c;
+            }
+            return sign(a.pre.length - b.pre.length);
+          };
+          return versions.slice().sort(compare);
+        }
+      }
+testCases:
+  - { args: [["1.10.0", "1.2.0", "1.9.9", "0.9.0"]], expected: ["0.9.0", "1.2.0", "1.9.9", "1.10.0"], visible: true }
+  - { args: [["1.0.0", "1.0.0-rc.1", "1.0.0-beta", "1.0.0-alpha"]], expected: ["1.0.0-alpha", "1.0.0-beta", "1.0.0-rc.1", "1.0.0"], visible: true }
+  - { args: [[]], expected: [], visible: false }
+  - { args: [["2.0.0"]], expected: ["2.0.0"], visible: false }
+  - { args: [["1.0.0", "1.0.0-rc.1", "1.0.0-beta.11", "1.0.0-beta.2", "1.0.0-beta", "1.0.0-alpha.beta", "1.0.0-alpha.1", "1.0.0-alpha"]], expected: ["1.0.0-alpha", "1.0.0-alpha.1", "1.0.0-alpha.beta", "1.0.0-beta", "1.0.0-beta.2", "1.0.0-beta.11", "1.0.0-rc.1", "1.0.0"], visible: false }
+  - { args: [["1.0.0-2", "1.0.0-10", "1.0.0-a", "1.0.0-1"]], expected: ["1.0.0-1", "1.0.0-2", "1.0.0-10", "1.0.0-a"], visible: false }
+  - { args: [["1.0.0", "1.0.0-rc.1", "0.10.3", "1.0.0", "0.9.12"]], expected: ["0.9.12", "0.10.3", "1.0.0-rc.1", "1.0.0", "1.0.0"], visible: false }
+  - { args: [["1.0.0-alpha", "1.0.0-Beta", "1.0.0-alpha-2", "1.0.0-alpha.1"]], expected: ["1.0.0-Beta", "1.0.0-alpha", "1.0.0-alpha.1", "1.0.0-alpha-2"], visible: false }

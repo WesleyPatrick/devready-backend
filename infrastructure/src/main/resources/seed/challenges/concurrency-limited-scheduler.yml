@@ -1,0 +1,131 @@
+slug: concurrency-limited-scheduler
+title: Agendador com limite de concorrência
+area: frontend
+level: senior
+difficulty: medium
+tags: [algoritmos, estruturas-de-dados, javascript]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Um cliente HTTP só pode ter `k` requisições em andamento ao mesmo tempo. Todas as tarefas chegam no instante 0, na ordem da lista `durations`, e cada uma leva o tempo indicado. Uma tarefa começa assim que houver uma vaga livre: as `k` primeiras começam em 0 e, quando uma vaga é liberada, a próxima tarefa da fila (sempre na ordem de chegada) ocupa-a no mesmo instante. Se duas vagas ficam livres no mesmo instante, as tarefas seguintes começam nesse instante, também na ordem da fila.
+
+  Devolva, na ordem das tarefas, o instante em que cada uma termina. Tarefas com duração 0 terminam no instante em que começam.
+
+  Limites: `0 <= n <= 10^5` tarefas, `0 <= durations[i] <= 10^4`, `1 <= k <= 10^9`. Os instantes cabem em `int`.
+
+  Exemplo: `durations = [4, 2, 3, 1]` e `k = 2` produzem `[4, 2, 5, 5]`: as duas primeiras começam em 0; a terceira entra em 2 (termina em 5) e a quarta em 4 (termina em 5).
+approachSummary: |
+  Simule a fila com uma fila de prioridade (heap mínimo) dos instantes de término das tarefas em andamento. Para cada tarefa, se há menos de `k` em andamento, ela começa em 0; senão, retire o menor término do heap (a vaga que libera primeiro) e a tarefa começa nesse instante. O término é início mais duração, e ele entra no heap. Como a fila é atendida na ordem, o resultado não depende de qual vaga específica é usada. Custo O(n log min(n, k)); varrer as k vagas a cada tarefa daria O(n · k) e estoura com n e k grandes.
+languages:
+  java:
+    functionName: finishTimes
+    starterCode: |
+      class Solution {
+          public int[] finishTimes(int[] durations, int k) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.PriorityQueue;
+
+      class Solution {
+          public int[] finishTimes(int[] durations, int k) {
+              int[] result = new int[durations.length];
+              PriorityQueue<Integer> running = new PriorityQueue<>();
+              for (int i = 0; i < durations.length; i++) {
+                  int start = 0;
+                  if (running.size() >= k) {
+                      start = running.poll();
+                  }
+                  result[i] = start + durations[i];
+                  running.add(result[i]);
+              }
+              return result;
+          }
+      }
+  python:
+    functionName: finish_times
+    starterCode: |
+      class Solution:
+          def finish_times(self, durations, k):
+              # sua solução
+              return []
+    referenceSolution: |
+      import heapq
+
+
+      class Solution:
+          def finish_times(self, durations, k):
+              running = []
+              result = []
+              for d in durations:
+                  start = 0
+                  if len(running) >= k:
+                      start = heapq.heappop(running)
+                  end = start + d
+                  result.append(end)
+                  heapq.heappush(running, end)
+              return result
+  javascript:
+    functionName: finishTimes
+    starterCode: |
+      class Solution {
+        finishTimes(durations, k) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        finishTimes(durations, k) {
+          const heap = [];
+          const push = (v) => {
+            heap.push(v);
+            let i = heap.length - 1;
+            while (i > 0) {
+              const p = (i - 1) >> 1;
+              if (heap[p] <= heap[i]) break;
+              [heap[p], heap[i]] = [heap[i], heap[p]];
+              i = p;
+            }
+          };
+          const pop = () => {
+            const top = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+              heap[0] = last;
+              let i = 0;
+              for (;;) {
+                const l = 2 * i + 1;
+                const r = l + 1;
+                let m = i;
+                if (l < heap.length && heap[l] < heap[m]) m = l;
+                if (r < heap.length && heap[r] < heap[m]) m = r;
+                if (m === i) break;
+                [heap[m], heap[i]] = [heap[i], heap[m]];
+                i = m;
+              }
+            }
+            return top;
+          };
+          const result = [];
+          for (const d of durations) {
+            const start = heap.length >= k ? pop() : 0;
+            const end = start + d;
+            result.push(end);
+            push(end);
+          }
+          return result;
+        }
+      }
+testCases:
+  - { args: [[4, 2, 3, 1], 2], expected: [4, 2, 5, 5], visible: true }
+  - { args: [[3, 3, 3], 1], expected: [3, 6, 9], visible: true }
+  - { args: [[], 3], expected: [], visible: false }
+  - { args: [[5, 2], 5], expected: [5, 2], visible: false }
+  - { args: [[0, 0, 4, 0], 1], expected: [0, 0, 4, 4], visible: false }
+  - { args: [[0, 0, 0], 2], expected: [0, 0, 0], visible: false }
+  - { args: [[5, 1, 1, 1, 1], 2], expected: [5, 1, 2, 3, 4], visible: false }
+  - { args: [[7, 7, 7, 7, 7, 7], 1000000000], expected: [7, 7, 7, 7, 7, 7], visible: false }

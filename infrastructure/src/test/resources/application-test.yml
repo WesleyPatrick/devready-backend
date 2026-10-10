@@ -1,0 +1,9 @@
+devready:
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret
+    access-token-ttl: 15m
+  auth:
+    refresh-token-ttl: 7d
+    one-time-code-ttl: 60s
+  seed:
+    enabled: false

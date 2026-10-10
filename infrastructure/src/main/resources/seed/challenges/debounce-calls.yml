@@ -1,0 +1,129 @@
+slug: debounce-calls
+title: Quando o debounce executa de fato
+area: frontend
+level: pleno
+difficulty: medium
+tags: [javascript, performance-web, arrays]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Considere um *debounce* de execução no fim com teto de espera, inspirado no `maxWait` do lodash, que também conta o teto a partir da última execução. Cada chamada reinicia um temporizador de `wait` ms, e a função só executa quando esse tempo passa sem chamada nova. Para não ficar adiada para sempre sob chamadas contínuas, ela também executa, no mais tardar, `maxWait` ms depois da última execução. Os detalhes estão nas regras abaixo, e são elas que valem.
+
+  Você recebe os instantes das chamadas (ms, em ordem não decrescente), `wait` e `maxWait` (sempre `wait <= maxWait`). Devolva os instantes de cada execução, em ordem.
+
+  Regras:
+  - As chamadas se agrupam em rajadas. Cada rajada tem um instante `r`, a partir do qual o teto conta, e a sua última chamada `u`. A execução da rajada está marcada para `min(u + wait, r + maxWait)`.
+  - Uma chamada que chega **antes** desse instante entra na rajada e atualiza `u`. Uma que chega exatamente nesse instante, ou depois, encontra a execução já feita e abre uma rajada nova.
+  - Quando uma chamada no instante `c` abre uma rajada: se ainda não houve execução, ou se `c` chegou `wait` ms ou mais depois da chamada anterior (as chamadas pararam), o teto recomeça e `r = c`. Caso contrário, as chamadas não pararam, e o teto continua contando da última execução: `r` é o instante dela.
+  - A última rajada sempre executa.
+
+  Limites: instantes, `wait` e `maxWait` entre 0 e 10^9 (os resultados chegam a 2 · 10^9 e cabem em `int`).
+
+  Exemplo: chamadas `[0, 100, 200, 300]` com `wait = 150` e `maxWait = 250` produzem `[250, 450]`. A rajada que começou em 0 é forçada a executar em 250. A chamada de 300 abre outra, mas chegou só 100 ms depois da de 200, então o teto continua contando da execução de 250, e a nova execução fica marcada para `min(300 + 150, 250 + 250) = 450`.
+approachSummary: |
+  Simule as rajadas em uma passada. Ao abrir uma rajada na chamada `c`, escolha o início do teto: `c`, se for a primeira rajada ou se `c` veio `wait` ms ou mais depois da chamada anterior; senão, o instante da última execução. Guarde a última chamada (`u`) e calcule o instante marcado `min(u + wait, r + maxWait)`. Enquanto a próxima chamada vier estritamente antes desse instante, ela entra na rajada e o instante é recalculado; quando não vier, registre a execução e abra uma rajada nova na chamada seguinte. É o que o `setTimeout` com `clearTimeout` faz, mais o teto do `maxWait`, só que calculado sem relógio. Cada chamada é lida uma vez: O(n) de tempo, mais o espaço do resultado. O erro comum é recomeçar o teto em toda rajada nova, o que atrasa a execução quando as chamadas nunca param. Em Java, some em `long` para `u + wait` e `r + maxWait` não estourarem antes do `min`.
+languages:
+  java:
+    functionName: debounceCalls
+    starterCode: |
+      class Solution {
+          public int[] debounceCalls(int[] calls, int wait, int maxWait) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      class Solution {
+          public int[] debounceCalls(int[] calls, int wait, int maxWait) {
+              int[] buffer = new int[calls.length];
+              int count = 0;
+              long lastRun = 0;
+              int i = 0;
+              while (i < calls.length) {
+                  long start = calls[i];
+                  long capFrom = start;
+                  if (i > 0 && start < (long) calls[i - 1] + wait) {
+                      capFrom = lastRun;
+                  }
+                  long due = Math.min(start + wait, capFrom + maxWait);
+                  int j = i + 1;
+                  while (j < calls.length && calls[j] < due) {
+                      due = Math.min((long) calls[j] + wait, capFrom + maxWait);
+                      j++;
+                  }
+                  buffer[count++] = (int) due;
+                  lastRun = due;
+                  i = j;
+              }
+              int[] result = new int[count];
+              System.arraycopy(buffer, 0, result, 0, count);
+              return result;
+          }
+      }
+  python:
+    functionName: debounce_calls
+    starterCode: |
+      class Solution:
+          def debounce_calls(self, calls, wait, max_wait):
+              # sua solução
+              return []
+    referenceSolution: |
+      class Solution:
+          def debounce_calls(self, calls, wait, max_wait):
+              runs = []
+              i = 0
+              while i < len(calls):
+                  start = calls[i]
+                  cap_from = start
+                  if i > 0 and start < calls[i - 1] + wait:
+                      cap_from = runs[-1]
+                  due = min(start + wait, cap_from + max_wait)
+                  j = i + 1
+                  while j < len(calls) and calls[j] < due:
+                      due = min(calls[j] + wait, cap_from + max_wait)
+                      j += 1
+                  runs.append(due)
+                  i = j
+              return runs
+  javascript:
+    functionName: debounceCalls
+    starterCode: |
+      class Solution {
+        debounceCalls(calls, wait, maxWait) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        debounceCalls(calls, wait, maxWait) {
+          const runs = [];
+          let i = 0;
+          while (i < calls.length) {
+            const start = calls[i];
+            let capFrom = start;
+            if (i > 0 && start < calls[i - 1] + wait) {
+              capFrom = runs[runs.length - 1];
+            }
+            let due = Math.min(start + wait, capFrom + maxWait);
+            let j = i + 1;
+            while (j < calls.length && calls[j] < due) {
+              due = Math.min(calls[j] + wait, capFrom + maxWait);
+              j++;
+            }
+            runs.push(due);
+            i = j;
+          }
+          return runs;
+        }
+      }
+testCases:
+  - { args: [[0, 100, 200, 300], 150, 1000], expected: [450], visible: true }
+  - { args: [[0, 100, 200, 300], 150, 250], expected: [250, 450], visible: true }
+  - { args: [[], 100, 100], expected: [], visible: false }
+  - { args: [[10], 0, 0], expected: [10], visible: false }
+  - { args: [[0, 100, 250, 251, 700], 150, 10000], expected: [250, 401, 850], visible: false }
+  - { args: [[0, 0], 0, 0], expected: [0, 0], visible: false }
+  - { args: [[0, 100, 200, 300, 400, 500, 600, 700, 800, 900], 150, 400], expected: [400, 800, 1050], visible: false }
+  - { args: [[0, 100, 200, 350, 450, 550, 650, 750, 850], 150, 250], expected: [250, 600, 850, 1000], visible: false }

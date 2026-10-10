@@ -1,0 +1,171 @@
+slug: network-delay-time
+title: Tempo de propagação do sinal
+area: backend
+level: senior
+difficulty: hard
+tags: [algoritmos, estruturas-de-dados, complexidade]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Uma rede tem `n` nós numerados de `1` a `n`. A lista `times` descreve as arestas dirigidas: cada item é `[origem, destino, tempo]`, o tempo que o sinal leva para ir de `origem` até `destino`. Um sinal sai do nó `k` no instante 0 e segue por todas as arestas disponíveis ao mesmo tempo.
+
+  Devolva o tempo mínimo para que todos os `n` nós tenham recebido o sinal, ou `-1` se algum nó for inalcançável a partir de `k`. Limites: `1 <= n <= 100`, `1 <= k <= n`, no máximo 6000 arestas e `0 <= tempo <= 100`. Pode haver mais de uma aresta entre o mesmo par de nós, e `n` pode ser 1 (resposta `0`).
+
+  Exemplo: para `times = [[2,1,1],[2,3,1],[3,4,1]]`, `n = 4` e `k = 2`, a resposta é `2`.
+approachSummary: |
+  A pergunta é "qual o caminho mais curto de `k` até o nó mais distante", e a resposta é o maior dos menores caminhos. Como os pesos não são negativos, o algoritmo de Dijkstra resolve: monte a lista de adjacência, use uma fila de prioridade ordenada pela distância acumulada, descarte entradas desatualizadas e relaxe as arestas de cada nó retirado. No fim, se algum nó ficou sem distância, devolva -1; senão, o maior valor. Tempo O(E log V), memória O(V + E). Bellman-Ford também acerta nos limites do enunciado, mas custa O(V * E).
+languages:
+  java:
+    functionName: networkDelayTime
+    starterCode: |
+      class Solution {
+          public int networkDelayTime(int[][] times, int n, int k) {
+              // sua solução
+              return 0;
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayList;
+      import java.util.Arrays;
+      import java.util.List;
+      import java.util.PriorityQueue;
+
+      class Solution {
+          public int networkDelayTime(int[][] times, int n, int k) {
+              List<List<int[]>> graph = new ArrayList<>();
+              for (int i = 0; i <= n; i++) {
+                  graph.add(new ArrayList<>());
+              }
+              for (int[] t : times) {
+                  graph.get(t[0]).add(new int[]{t[1], t[2]});
+              }
+              long[] dist = new long[n + 1];
+              Arrays.fill(dist, Long.MAX_VALUE);
+              dist[k] = 0;
+              PriorityQueue<long[]> queue = new PriorityQueue<>((a, b) -> Long.compare(a[1], b[1]));
+              queue.add(new long[]{k, 0});
+              while (!queue.isEmpty()) {
+                  long[] cur = queue.poll();
+                  int u = (int) cur[0];
+                  if (cur[1] > dist[u]) {
+                      continue;
+                  }
+                  for (int[] edge : graph.get(u)) {
+                      long next = cur[1] + edge[1];
+                      if (next < dist[edge[0]]) {
+                          dist[edge[0]] = next;
+                          queue.add(new long[]{edge[0], next});
+                      }
+                  }
+              }
+              long best = 0;
+              for (int i = 1; i <= n; i++) {
+                  if (dist[i] == Long.MAX_VALUE) {
+                      return -1;
+                  }
+                  best = Math.max(best, dist[i]);
+              }
+              return (int) best;
+          }
+      }
+  python:
+    functionName: network_delay_time
+    starterCode: |
+      class Solution:
+          def network_delay_time(self, times, n, k):
+              # sua solução
+              return 0
+    referenceSolution: |
+      import heapq
+
+
+      class Solution:
+          def network_delay_time(self, times, n, k):
+              graph = [[] for _ in range(n + 1)]
+              for u, v, w in times:
+                  graph[u].append((v, w))
+              dist = [float("inf")] * (n + 1)
+              dist[k] = 0
+              heap = [(0, k)]
+              while heap:
+                  d, u = heapq.heappop(heap)
+                  if d > dist[u]:
+                      continue
+                  for v, w in graph[u]:
+                      if d + w < dist[v]:
+                          dist[v] = d + w
+                          heapq.heappush(heap, (dist[v], v))
+              best = max(dist[1:])
+              return -1 if best == float("inf") else best
+  javascript:
+    functionName: networkDelayTime
+    starterCode: |
+      class Solution {
+        networkDelayTime(times, n, k) {
+          // sua solução
+          return 0;
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        networkDelayTime(times, n, k) {
+          const graph = [];
+          for (let i = 0; i <= n; i++) graph.push([]);
+          for (const [u, v, w] of times) graph[u].push([v, w]);
+          const dist = new Array(n + 1).fill(Infinity);
+          dist[k] = 0;
+          const heap = [[0, k]];
+          const push = (item) => {
+            heap.push(item);
+            let i = heap.length - 1;
+            while (i > 0) {
+              const p = (i - 1) >> 1;
+              if (heap[p][0] <= heap[i][0]) break;
+              [heap[p], heap[i]] = [heap[i], heap[p]];
+              i = p;
+            }
+          };
+          const pop = () => {
+            const top = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+              heap[0] = last;
+              let i = 0;
+              for (;;) {
+                const l = 2 * i + 1;
+                const r = l + 1;
+                let m = i;
+                if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+                if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+                if (m === i) break;
+                [heap[m], heap[i]] = [heap[i], heap[m]];
+                i = m;
+              }
+            }
+            return top;
+          };
+          while (heap.length > 0) {
+            const [d, u] = pop();
+            if (d > dist[u]) continue;
+            for (const [v, w] of graph[u]) {
+              if (d + w < dist[v]) {
+                dist[v] = d + w;
+                push([dist[v], v]);
+              }
+            }
+          }
+          let best = 0;
+          for (let i = 1; i <= n; i++) best = Math.max(best, dist[i]);
+          return best === Infinity ? -1 : best;
+        }
+      }
+testCases:
+  - { args: [[[2, 1, 1], [2, 3, 1], [3, 4, 1]], 4, 2], expected: 2, visible: true }
+  - { args: [[[1, 2, 1]], 2, 1], expected: 1, visible: true }
+  - { args: [[[1, 2, 1]], 2, 2], expected: -1, visible: false }
+  - { args: [[], 1, 1], expected: 0, visible: false }
+  - { args: [[[1, 2, 5], [1, 3, 1], [3, 2, 1], [2, 4, 2]], 4, 1], expected: 4, visible: false }
+  - { args: [[[1, 2, 1], [2, 1, 3], [2, 3, 2], [3, 4, 1], [1, 4, 10], [1, 3, 9]], 4, 1], expected: 4, visible: false }
+  - { args: [[[1, 2, 0], [2, 3, 0], [1, 3, 4]], 3, 1], expected: 0, visible: false }
+  - { args: [[[3, 1, 5], [3, 2, 2], [2, 1, 2], [3, 4, 1], [4, 5, 1], [5, 1, 1]], 5, 3], expected: 3, visible: false }

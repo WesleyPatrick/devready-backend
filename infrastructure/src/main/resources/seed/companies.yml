@@ -1,0 +1,12 @@
+# Empresas-alvo. Gerado a partir da configuração do devready-research; a exportação da pesquisa
+# substitui este arquivo com o texto sobre o processo seletivo de cada empresa.
+- { slug: amazon, name: Amazon, group: big-tech, about: "", careers: ["https://www.amazon.jobs"] }
+- { slug: apple, name: Apple, group: big-tech, about: "", careers: ["https://jobs.apple.com"] }
+- { slug: google, name: Google, group: big-tech, about: "", careers: ["https://www.google.com/about/careers/applications/"] }
+- { slug: meta, name: Meta, group: big-tech, about: "", careers: ["https://www.metacareers.com/jobs"] }
+- { slug: microsoft, name: Microsoft, group: big-tech, about: "", careers: ["https://apply.careers.microsoft.com"] }
+- { slug: ifood, name: iFood, group: tech-brasil, about: "", careers: ["https://carreiras.ifood.com.br"] }
+- { slug: mercado-livre, name: Mercado Livre, group: tech-brasil, about: "", careers: ["https://mercadolibre.eightfold.ai/careers"] }
+- { slug: nubank, name: Nubank, group: tech-brasil, about: "", careers: ["https://jobs.ashbyhq.com/nubank"] }
+- { slug: picpay, name: PicPay, group: tech-brasil, about: "", careers: ["https://picpay.com/jobs"] }
+- { slug: stone, name: Stone, group: tech-brasil, about: "", careers: ["https://jornada.stone.com.br"] }

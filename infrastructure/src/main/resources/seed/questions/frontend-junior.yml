@@ -1,0 +1,209 @@
+area: frontend
+level: junior
+questions:
+  - slug: frontend-junior-html-button-vs-div
+    title: "Botão de envio com div"
+    difficulty: easy
+    statement: |
+      Um colega criou o botão de envio de um formulário com `<div class="btn" onclick="enviar()">Enviar</div>`. Qual é o principal problema dessa escolha?
+    options:
+      - text: Nenhum, desde que o CSS deixe a `div` com aparência de botão
+      - text: A `div` não dispara eventos de clique em navegadores móveis
+      - text: A `div` não recebe foco pelo teclado nem é anunciada como botão
+        correct: true
+      - text: O atributo `onclick` foi removido do HTML5 e não funciona mais
+    explanation: |
+      O `<button>` já vem com semântica e comportamento: entra na ordem de tabulação, responde a Enter e Espaço e é anunciado como botão pela tecnologia assistiva. Uma `div` clicável parece igual para quem usa mouse, e é por isso que a primeira alternativa engana, mas quem navega por teclado ou leitor de tela não consegue usá-la sem `tabindex`, `role` e tratamento de teclas feitos à mão.
+    tags: [html, acessibilidade]
+
+  - slug: frontend-junior-css-box-model
+    title: "Largura total no box model"
+    difficulty: medium
+    statement: |
+      Um elemento tem `width: 200px`, `padding: 20px` e `border: 2px solid`, com o `box-sizing` padrão (`content-box`). Qual largura ele ocupa na tela, sem contar a margem?
+    options:
+      - text: 200px
+      - text: 220px
+      - text: 240px
+      - text: 244px
+        correct: true
+    explanation: |
+      No `content-box`, o `width` vale só para o conteúdo; padding e borda são somados dos dois lados: 200 + 20 + 20 + 2 + 2 = 244px. A resposta de 240px esquece a borda, e 200px seria o resultado com `box-sizing: border-box`, em que padding e borda ficam dentro da largura declarada. Por isso muitos projetos aplicam `border-box` em todos os elementos.
+    tags: [css]
+
+  - slug: frontend-junior-css-specificity
+    title: "Seletor mais específico no CSS"
+    difficulty: medium
+    statement: |
+      Quatro regras no mesmo arquivo CSS definem a cor do mesmo link, e nenhuma usa `!important`. Qual seletor vence?
+    options:
+      - text: "`.menu .item a`"
+      - text: "`#topo a`"
+        correct: true
+      - text: "`nav ul li a`"
+      - text: "`a.link`"
+    explanation: |
+      A especificidade é comparada como uma tripla (IDs, classes e pseudo-classes, elementos). `#topo a` vale (1, 0, 1); `.menu .item a` vale (0, 2, 1), que parece mais forte por ter mais partes, mas um único ID vence qualquer quantidade de classes. `nav ul li a` vale (0, 0, 4) e `a.link` vale (0, 1, 1). A ordem no arquivo só desempata seletores de mesma especificidade.
+    tags: [css]
+
+  - slug: frontend-junior-css-flex-centering
+    title: "Centralizar com flexbox"
+    difficulty: easy
+    statement: |
+      Num contêiner com `display: flex` e `flex-direction: row` (o padrão), qual combinação centraliza o filho na horizontal e na vertical?
+    options:
+      - text: "`justify-content: center` e `align-items: center`"
+        correct: true
+      - text: "`align-items: center` e `text-align: center`"
+      - text: "`justify-content: center` e `vertical-align: middle`"
+      - text: "`align-content: center` e `margin: 0 auto`"
+    explanation: |
+      Em flexbox, `justify-content` alinha no eixo principal (horizontal, em `row`) e `align-items` no eixo cruzado (vertical). `vertical-align` só vale para elementos inline e células de tabela, então não tem efeito no filho de um contêiner flex. `text-align` alinha o texto dentro do filho, não o filho. `align-content` distribui as linhas de um contêiner com `flex-wrap: wrap` (mesmo que haja uma linha só), mas a premissa usa o padrão `nowrap`, em que ele não tem efeito; e `margin: 0 auto` só centraliza na horizontal.
+    tags: [css]
+
+  - slug: frontend-junior-js-closure
+    title: "Closures em contadores independentes"
+    difficulty: medium
+    statement: |
+      O que o código abaixo imprime no console?
+
+      ```js
+      function criarContador() {
+        let total = 0;
+        return () => ++total;
+      }
+      const a = criarContador();
+      a();
+      a();
+      const b = criarContador();
+      console.log(a(), b());
+      ```
+    options:
+      - text: "`1 1`"
+      - text: "`3 3`"
+      - text: "`2 1`"
+      - text: "`3 1`"
+        correct: true
+    explanation: |
+      Cada chamada de `criarContador` cria um escopo novo com o seu próprio `total`, e a função devolvida guarda uma referência a ele (é a closure). `a` já foi chamado duas vezes, então a terceira chamada devolve 3; `b` tem um `total` independente e devolve 1. A resposta `3 3` só valeria se `total` fosse uma variável compartilhada, declarada fora da função.
+    tags: [javascript]
+
+  - slug: frontend-junior-js-event-loop
+    title: "Ordem de timeout e promise"
+    difficulty: hard
+    statement: |
+      Em que ordem as letras aparecem no console?
+
+      ```js
+      console.log("A");
+      setTimeout(() => console.log("B"), 0);
+      Promise.resolve().then(() => console.log("C"));
+      console.log("D");
+      ```
+    options:
+      - text: A B C D
+      - text: A C D B
+      - text: A D C B
+        correct: true
+      - text: A D B C
+    explanation: |
+      Primeiro roda todo o código síncrono: A e D. Depois o event loop esvazia a fila de microtarefas, onde estão os callbacks de promises (C), e só então pega a próxima tarefa da fila de macrotarefas, onde está o `setTimeout` (B). Um `setTimeout` com 0 ms não executa imediatamente: ele só garante que o callback vai para a fila, atrás das microtarefas pendentes.
+    tags: [javascript]
+
+  - slug: frontend-junior-js-promise-allsettled
+    title: "Três requisições e uma falha"
+    difficulty: easy
+    statement: |
+      A página de painel dispara três requisições independentes em paralelo e deve mostrar o que deu certo mesmo que uma delas falhe. Qual recurso usar?
+    options:
+      - text: "`Promise.allSettled`, que informa o resultado de cada uma"
+        correct: true
+      - text: "`Promise.all`, que descarta as rejeitadas e devolve as outras"
+      - text: "`Promise.race`, que espera a mais lenta terminar e devolve todas"
+      - text: Três `await` em sequência dentro de um único `try`
+    explanation: |
+      `Promise.allSettled` espera todas terminarem e devolve, para cada uma, `{ status: "fulfilled", value }` ou `{ status: "rejected", reason }`. O `Promise.all` é a escolha tentadora, mas ele rejeita assim que qualquer promise rejeita e os outros resultados se perdem. `Promise.race` resolve com a primeira que terminar, e `await` em sequência perde o paralelismo e para no primeiro erro.
+    tags: [javascript]
+
+  - slug: frontend-junior-ts-unknown-vs-any
+    title: "unknown versus any no TypeScript"
+    difficulty: easy
+    statement: |
+      Em TypeScript, uma função recebe um valor de fonte externa, como o retorno de `JSON.parse`. Por que tipar esse valor como `unknown` em vez de `any`?
+    options:
+      - text: Porque `unknown` é convertido automaticamente para o tipo certo em tempo de execução
+      - text: Porque `unknown` exige checar o tipo antes do uso, e `any` desliga a checagem
+        correct: true
+      - text: Porque `any` não é aceito pelo compilador no modo `strict`
+      - text: Não há diferença; os dois são sinônimos mantidos por compatibilidade
+    explanation: |
+      Com `unknown`, o compilador não deixa acessar propriedades nem chamar métodos até você estreitar o tipo com `typeof`, `instanceof`, um type guard ou uma biblioteca de validação. Com `any`, tudo compila e o erro só aparece em produção. Os tipos existem só em tempo de compilação, então nada é convertido em execução; e o modo `strict` proíbe apenas o `any` implícito, não o declarado.
+    tags: [typescript]
+
+  - slug: frontend-junior-react-state-immutability
+    title: "Lista que não atualiza após `push`"
+    difficulty: medium
+    statement: |
+      Neste componente React, clicar em "Adicionar" não atualiza a lista na tela. Por quê?
+
+      ```jsx
+      const [itens, setItens] = useState([]);
+      function adicionar(novo) {
+        itens.push(novo);
+        setItens(itens);
+      }
+      ```
+    options:
+      - text: O `useState` não aceita arrays, apenas valores primitivos
+      - text: Falta chamar `forceUpdate` depois do `setItens`
+      - text: O array foi alterado no lugar e mantém a mesma referência
+        correct: true
+      - text: O `push` é assíncrono e o `setItens` roda antes de ele terminar
+    explanation: |
+      O React compara o estado novo com o anterior por referência (`Object.is`). Como `push` altera o mesmo array, `setItens(itens)` entrega a mesma referência e a renderização é descartada. O certo é criar um array novo: `setItens([...itens, novo])` ou, melhor, `setItens(anteriores => [...anteriores, novo])`. `useState` aceita qualquer valor e `push` é síncrono.
+    tags: [react]
+
+  - slug: frontend-junior-react-list-keys
+    title: "Índice ou id como `key`"
+    difficulty: medium
+    statement: |
+      Ao renderizar uma lista editável de tarefas com `map`, por que usar o `id` de cada tarefa como `key` em vez do índice do array?
+    options:
+      - text: Porque, com o índice, remover ou reordenar itens mistura o estado entre eles
+        correct: true
+      - text: Porque o React lança um erro quando a `key` é um número, e não uma string
+      - text: Porque a `key` vira o atributo `id` do elemento no HTML gerado
+      - text: Porque índices deixam a renderização mais lenta em qualquer lista
+    explanation: |
+      O React usa a `key` para saber qual item da renderização anterior corresponde a qual da nova. Com o índice, ao remover o primeiro item todos os outros "herdam" a posição anterior, e o estado interno, como o texto de um input, fica preso ao item errado. Índice como `key` só é seguro em listas estáticas. A `key` não vai para o DOM e números são aceitos normalmente.
+    tags: [react]
+
+  - slug: frontend-junior-dom-event-delegation
+    title: "Cliques em itens criados depois"
+    difficulty: medium
+    statement: |
+      Uma lista `<ul>` recebe novos `<li>` dinamicamente e cada item precisa reagir a cliques. Qual abordagem funciona também para os itens adicionados depois, usando um único listener?
+    options:
+      - text: Registrar um listener em cada `<li>` quando a página carrega
+      - text: Chamar `event.stopPropagation()` em cada item para o clique chegar mais rápido
+      - text: Usar `setInterval` para registrar listeners nos itens novos
+      - text: Registrar o listener no `<ul>` e achar o item com `event.target.closest("li")`
+        correct: true
+    explanation: |
+      Isso é delegação de eventos: o clique em um `<li>` sobe (bubbling) até o `<ul>`, onde um único listener identifica o item de origem pelo `event.target`. Itens criados depois funcionam sem registro extra. Registrar em cada `<li>` no carregamento deixa de fora os itens novos, e `stopPropagation` faz o contrário do necessário, impedindo o evento de subir.
+    tags: [dom, javascript]
+
+  - slug: frontend-junior-perf-debounce
+    title: "Busca que chama a API a cada tecla"
+    difficulty: easy
+    statement: |
+      Um campo de busca faz uma requisição à API a cada tecla digitada, e o servidor recebe dezenas de chamadas por segundo. Qual técnica resolve isso de forma mais direta?
+    options:
+      - text: Trocar o `fetch` por `XMLHttpRequest`, que é mais leve
+      - text: Aplicar debounce, buscando só quando o usuário para de digitar
+        correct: true
+      - text: Colocar a requisição dentro de um `useMemo` para memorizá-la
+      - text: Aumentar o tempo limite da requisição no cliente
+    explanation: |
+      Com debounce, cada tecla reinicia um temporizador (por exemplo, de 300 ms) e a busca só dispara quando ele termina, o que reduz dezenas de chamadas a uma. `useMemo` parece uma otimização, mas ele memoriza um cálculo durante a renderização, não controla quando uma requisição acontece e não é lugar para efeitos colaterais. Trocar a API de requisição ou o tempo limite não muda a quantidade de chamadas.
+    tags: [performance-web, javascript]

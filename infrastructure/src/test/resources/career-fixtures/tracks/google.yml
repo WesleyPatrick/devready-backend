@@ -1,0 +1,8 @@
+company: google
+tracks:
+  - area: backend
+    stack: java-spring
+    seniority: junior
+    jobs: 5
+    units:
+      - { competency: sql-e-modelagem-de-dados, weight: 0.4, requirement: desejavel, jobs: 2 }

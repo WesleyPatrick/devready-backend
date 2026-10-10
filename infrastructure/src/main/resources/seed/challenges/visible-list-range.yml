@@ -1,0 +1,143 @@
+slug: visible-list-range
+title: Itens visíveis numa lista virtualizada
+area: frontend
+level: pleno
+difficulty: medium
+tags: [performance-web, algoritmos, arrays]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Numa lista virtualizada, só os itens que aparecem na janela de rolagem são desenhados. Os itens ficam empilhados de cima para baixo, na ordem, e a altura de cada um é dada em pixels (`heights[i]`, inteiro maior que zero). O item `i` ocupa de `início` (soma das alturas anteriores) até `início + heights[i]`, sem incluir o fim.
+
+  A janela vai de `scrollTop` até `scrollTop + viewport`, também sem incluir o fim. Devolva `[primeiro, último]`, os índices do primeiro e do último item com **ao menos um pixel** dentro da janela, ampliados em `overscan` itens para cada lado (itens extras desenhados para a rolagem não piscar), sem passar de `0` nem de `n - 1`.
+
+  Se nenhum item aparece, devolva `[]`: lista vazia, `viewport` zero ou `scrollTop` na altura total da lista ou além. Um item que só encosta na borda (termina em `scrollTop` ou começa em `scrollTop + viewport`) não conta.
+
+  Limites: até 100000 itens, `heights[i]` até 10000, e `scrollTop` e `viewport` entre 0 e 10^9, com a altura total até 10^9, com `overscan` de 0 a 1000.
+
+  Exemplo: com alturas `[50, 50, 50, 50, 50]`, `scrollTop = 75`, `viewport = 100` e `overscan = 0`, a janela vai de 75 a 175 e mostra os itens de 1 a 3, então o resultado é `[1, 3]`.
+approachSummary: |
+  Monte as somas de prefixo `prefix[i]` (o início do item `i`, com `prefix[n]` igual à altura total) e use busca binária em vez de varrer a lista. O primeiro item visível é o primeiro `i` com `prefix[i + 1] > scrollTop`, e o último é o último `i` com `prefix[i] < scrollTop + viewport`. Se nenhum satisfaz o primeiro critério, ou a janela tem altura zero, o resultado é vazio. Depois some e subtraia o `overscan`, limitando às bordas. Construir o prefixo custa O(n) uma vez; cada consulta custa O(log n), o que importa porque a rolagem repete a consulta várias vezes por segundo sobre a mesma lista. Em Java, some em `long` para não estourar o `int` em `scrollTop + viewport`.
+languages:
+  java:
+    functionName: visibleListRange
+    starterCode: |
+      class Solution {
+          public int[] visibleListRange(int[] heights, int scrollTop, int viewport, int overscan) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      class Solution {
+          public int[] visibleListRange(int[] heights, int scrollTop, int viewport, int overscan) {
+              int n = heights.length;
+              if (n == 0 || viewport <= 0) {
+                  return new int[0];
+              }
+              long[] prefix = new long[n + 1];
+              for (int i = 0; i < n; i++) {
+                  prefix[i + 1] = prefix[i] + heights[i];
+              }
+              long top = scrollTop;
+              long bottom = top + viewport;
+              if (top >= prefix[n]) {
+                  return new int[0];
+              }
+              int lo = 1;
+              int hi = n;
+              while (lo < hi) {
+                  int mid = (lo + hi) / 2;
+                  if (prefix[mid] > top) {
+                      hi = mid;
+                  } else {
+                      lo = mid + 1;
+                  }
+              }
+              int first = lo - 1;
+              int low = 0;
+              int high = n;
+              while (low < high) {
+                  int mid = (low + high) / 2;
+                  if (prefix[mid] >= bottom) {
+                      high = mid;
+                  } else {
+                      low = mid + 1;
+                  }
+              }
+              int last = Math.min(low - 1, n - 1);
+              return new int[] {Math.max(0, first - overscan), Math.min(n - 1, last + overscan)};
+          }
+      }
+  python:
+    functionName: visible_list_range
+    starterCode: |
+      class Solution:
+          def visible_list_range(self, heights, scroll_top, viewport, overscan):
+              # sua solução
+              return []
+    referenceSolution: |
+      from bisect import bisect_left, bisect_right
+
+
+      class Solution:
+          def visible_list_range(self, heights, scroll_top, viewport, overscan):
+              n = len(heights)
+              if n == 0 or viewport <= 0:
+                  return []
+              prefix = [0]
+              for h in heights:
+                  prefix.append(prefix[-1] + h)
+              if scroll_top >= prefix[n]:
+                  return []
+              bottom = scroll_top + viewport
+              first = bisect_right(prefix, scroll_top) - 1
+              last = min(bisect_left(prefix, bottom) - 1, n - 1)
+              return [max(0, first - overscan), min(n - 1, last + overscan)]
+  javascript:
+    functionName: visibleListRange
+    starterCode: |
+      class Solution {
+        visibleListRange(heights, scrollTop, viewport, overscan) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        visibleListRange(heights, scrollTop, viewport, overscan) {
+          const n = heights.length;
+          if (n === 0 || viewport <= 0) return [];
+          const prefix = [0];
+          for (const h of heights) prefix.push(prefix[prefix.length - 1] + h);
+          if (scrollTop >= prefix[n]) return [];
+          const bottom = scrollTop + viewport;
+          let lo = 1;
+          let hi = n;
+          while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (prefix[mid] > scrollTop) hi = mid;
+            else lo = mid + 1;
+          }
+          const first = lo - 1;
+          let low = 0;
+          let high = n;
+          while (low < high) {
+            const mid = (low + high) >> 1;
+            if (prefix[mid] >= bottom) high = mid;
+            else low = mid + 1;
+          }
+          const last = Math.min(low - 1, n - 1);
+          return [Math.max(0, first - overscan), Math.min(n - 1, last + overscan)];
+        }
+      }
+testCases:
+  - { args: [[50, 50, 50, 50, 50], 75, 100, 0], expected: [1, 3], visible: true }
+  - { args: [[50, 50, 50, 50, 50], 75, 100, 1], expected: [0, 4], visible: true }
+  - { args: [[], 0, 100, 2], expected: [], visible: false }
+  - { args: [[50, 50, 50, 50, 50], 250, 100, 0], expected: [], visible: false }
+  - { args: [[50, 50, 50, 50, 50], 249, 100, 0], expected: [4, 4], visible: false }
+  - { args: [[30, 10, 200, 5, 5, 60], 30, 170, 0], expected: [1, 2], visible: false }
+  - { args: [[40], 10, 20, 5], expected: [0, 0], visible: false }
+  - { args: [[20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20], 10005, 600, 3], expected: [497, 533], visible: false }

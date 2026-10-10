@@ -1,0 +1,227 @@
+area: devops
+level: senior
+questions:
+  - slug: devops-senior-slo-vs-sli
+    title: "Relação entre SLI e SLO"
+    difficulty: easy
+    statement: |
+      Numa conversa sobre confiabilidade, a equipe usa os termos SLI e SLO. Qual é a relação correta entre os dois?
+    options:
+      - text: "O SLI é a meta que o time promete; o SLO é a medição bruta que alimenta essa meta"
+      - text: "SLI e SLO são sinônimos; muda só o nome usado por cada equipe da empresa"
+      - text: "Meta para o valor de um SLI numa janela, como 99,9% de requisições com sucesso"
+        correct: true
+      - text: "O SLO é a multa contratual paga ao cliente, e o SLI é o relatório mensal que prova a multa"
+    explanation: |
+      O SLI (indicador) é o que se mede, por exemplo a proporção de requisições atendidas sem erro. O SLO (objetivo) é a meta sobre esse indicador numa janela de tempo, e é dele que sai o orçamento de erro. A primeira alternativa inverte os papéis; a segunda ignora que um é medição e o outro é meta; a quarta descreve o SLA, que é o contrato com consequências, e não o SLO.
+    tags: [observabilidade]
+
+  - slug: devops-senior-error-budget-math
+    title: "Orçamento de erro de um SLO de 99,9%"
+    difficulty: medium
+    statement: |
+      Um serviço tem SLO de disponibilidade de 99,9% numa janela de 30 dias. Aproximadamente quanto tempo de indisponibilidade cabe no orçamento de erro dessa janela?
+    options:
+      - text: "Cerca de 43 minutos"
+        correct: true
+      - text: "Cerca de 4 minutos e 20 segundos"
+      - text: "Cerca de 7 horas e 12 minutos"
+      - text: "Cerca de 8 horas e 46 minutos"
+    explanation: |
+      A janela tem 30 x 24 x 60 = 43.200 minutos, e o orçamento é 0,1% disso, ou seja, 43,2 minutos. Os 4 minutos e 20 segundos são o orçamento de um SLO de 99,99%, um dígito de nove a mais; as 7 horas e 12 minutos são o de 99%, um a menos; as 8 horas e 46 minutos são 0,1% de um ano inteiro, não de 30 dias, a confusão de janela mais comum.
+    tags: [observabilidade]
+
+  - slug: devops-senior-error-budget-policy
+    title: "Orçamento de erro quase esgotado"
+    difficulty: medium
+    statement: |
+      O SLO de um serviço é 99,9% em 30 dias. Na segunda semana, falhas causadas por deploys já consumiram 90% do orçamento de erro. Qual conduta combina com uma política de orçamento de erro?
+    options:
+      - text: "Reduzir o SLO para 99% até o fim da janela, para o time voltar ao verde sem mudar o ritmo"
+      - text: "Congelar todo deploy até o fim da janela, inclusive correções e reversões"
+      - text: "Seguir entregando normalmente, já que ainda restam 10% do orçamento e a janela não acabou"
+      - text: "Segurar funcionalidades e priorizar estabilidade, mantendo correções e reversões"
+        correct: true
+    explanation: |
+      Gastar 90% do orçamento em duas semanas é ritmo de estouro, e a política combinada reorienta o trabalho para estabilidade: funcionalidades esperam, enquanto correções e mudanças que reduzem risco continuam. Congelar tudo, inclusive reversões, tira justamente as ferramentas que recuperam o orçamento. Seguir normalmente ignora o ritmo de consumo (os 10% restantes acabam em poucos dias). Afrouxar o SLO esconde o problema e tira o sentido da meta.
+    tags: [observabilidade, ci-cd]
+
+  - slug: devops-senior-burn-rate-math
+    title: "Quanto orçamento uma taxa de consumo alta gasta"
+    difficulty: hard
+    statement: |
+      Um serviço tem SLO de 99,9% em 30 dias (720 horas). Uma taxa de consumo (burn rate) igual a 1 gasta o orçamento inteiro em exatamente 30 dias. Se a taxa ficar em 14,4 durante uma hora, que fração do orçamento da janela foi gasta?
+    options:
+      - text: "Cerca de 14,4%, a própria taxa lida como porcentagem"
+      - text: "Cerca de 2%"
+        correct: true
+      - text: "Cerca de 0,14%, a fração de uma hora numa janela de 720 horas"
+      - text: "100%, porque 14,4 vezes a taxa sustentável esgota tudo"
+    explanation: |
+      Com taxa 1, uma hora gasta 1/720 do orçamento; com taxa 14,4, gasta 14,4/720 = 2%, e o orçamento inteiro acabaria em 50 horas. É por isso que 14,4 sustentada por uma hora é um limite clássico para acordar o plantão: em 2% por hora, o estrago já é relevante. Os 14,4% leem a taxa como porcentagem; os 0,14% esquecem de multiplicar pela taxa; os 100% confundem "acaba se continuar" com "já acabou".
+    tags: [observabilidade]
+
+  - slug: devops-senior-incident-mitigate-first
+    title: "Primeira ação num incidente grave"
+    difficulty: medium
+    statement: |
+      Logo após um deploy, a taxa de erro de um serviço crítico sobe para 30%. Você é a pessoa que coordena o incidente. Qual deve ser a prioridade nos primeiros minutos?
+    options:
+      - text: "Descobrir a causa raiz nos logs antes de mexer em qualquer coisa, para não reverter às cegas e perder pistas"
+      - text: "Aplicar uma correção direta em produção assim que alguém apontar a linha suspeita no diff"
+      - text: "Reverter o deploy recente para reduzir o impacto e investigar a causa com o serviço estável"
+        correct: true
+      - text: "Adicionar instâncias ao serviço até a taxa de erro cair, sem olhar o que mudou nem o que falhou"
+    explanation: |
+      Em incidente, o objetivo inicial é mitigar o impacto ao usuário; reverter a mudança recente é a ação mais barata e reversível, e a investigação segue com o sistema estável. Procurar a causa raiz primeiro prolonga a indisponibilidade (os logs continuam lá depois da reversão). Um hotfix às pressas é mais lento e arriscado que reverter, e pode somar um segundo defeito ao primeiro. Escalar horizontalmente não corrige erro de código e ignora o gatilho mais provável, a mudança recente.
+    tags: [observabilidade, ci-cd]
+
+  - slug: devops-senior-postmortem-actions
+    title: "Ação corretiva após erro humano em produção"
+    difficulty: hard
+    statement: |
+      Um incidente começou quando uma pessoa rodou, em produção, um comando que pretendia rodar em homologação. Na revisão sem culpados, qual ação corretiva tem mais chance de evitar a repetição?
+    options:
+      - text: "Fazer a ferramenta exigir e exibir o ambiente, com confirmação e acesso mínimo"
+        correct: true
+      - text: "Treinar a pessoa e registrar uma advertência, para que ela redobre a atenção nas próximas operações"
+      - text: "Exigir um segundo aprovador humano em todo comando de produção, sem mudar a ferramenta"
+      - text: "Proibir todo acesso manual à produção, inclusive nas emergências, até segunda ordem"
+    explanation: |
+      Revisões sem culpados tratam o erro humano como sintoma: se uma pessoa competente pôde errar, o sistema deixou a porta aberta. Mudar a ferramenta (ambiente explícito, confirmação, privilégio mínimo) funciona para todos e sempre. Um segundo aprovador é um controle real, mas ainda depende de atenção e vira rotina de carimbo. Treinar e advertir depende de atenção perfeita. Proibir tudo bloqueia a resposta a incidentes e empurra as pessoas para atalhos.
+    tags: [observabilidade, seguranca]
+
+  - slug: devops-senior-autoscale-queue-backlog
+    title: "Escalar consumidores de uma fila"
+    difficulty: hard
+    statement: |
+      Consumidores de uma fila chamam APIs externas e passam a maior parte do tempo esperando respostas. O autoscaling por CPU não reage, e a fila cresce nos picos. Qual ajuste resolve melhor, sem pagar capacidade ociosa o dia todo?
+    options:
+      - text: "Baixar o alvo de CPU para 30%, para que o autoscaler reaja mais cedo aos picos de mensagens"
+      - text: "Fixar o número mínimo de réplicas no valor do pior pico já registrado, para nunca faltar capacidade"
+      - text: "Trocar a métrica de escala por memória, que sobe quando há mais mensagens em processamento"
+      - text: "Escalar pelo atraso da fila por consumidor, que mede o trabalho pendente"
+        correct: true
+    explanation: |
+      Carga limitada por espera de I/O mantém a CPU baixa mesmo com a fila crescendo, então CPU é uma métrica enganosa nesse caso. O backlog por consumidor (profundidade ou idade da mensagem mais antiga) reflete o trabalho que falta fazer e permite reduzir quando esvazia. Baixar o alvo de CPU continua dependendo de um sinal que não varia; fixar o pico paga capacidade parada; memória não acompanha o volume de mensagens.
+    tags: [nuvem, observabilidade, mensageria]
+
+  - slug: devops-senior-cloud-cost-commitment
+    title: "Combinar modelos de compra na nuvem"
+    difficulty: medium
+    statement: |
+      Uma plataforma tem uma base estável de 40 instâncias ligadas o tempo todo, picos de até três vezes essa capacidade por poucas horas e jobs de lote que toleram interrupção. Qual estratégia de compra tende a custar menos sem arriscar a disponibilidade?
+    options:
+      - text: "Tudo sob demanda, pela flexibilidade, já que o desconto de compromisso raramente compensa"
+      - text: "Compromisso de uso para o pico máximo inteiro, pois o preço por hora do compromisso é sempre menor"
+      - text: "Compromisso para a base, sob demanda para os picos e capacidade interrompível para os lotes"
+        correct: true
+      - text: "Tudo em capacidade interrompível, inclusive a base e as APIs, por ser o preço mais baixo da tabela"
+    explanation: |
+      O compromisso rende desconto quando a carga é previsível, então cobre só a base; os picos curtos ficam sob demanda e os lotes tolerantes entram em capacidade interrompível, que é barata mas pode ser retomada pelo provedor. Comprometer o pico paga por horas ociosas; tudo sob demanda deixa o desconto da base na mesa; rodar a base em capacidade interrompível arrisca derrubar o serviço quando houver retomada.
+    tags: [nuvem]
+
+  - slug: devops-senior-supply-chain-signing
+    title: "Garantir a origem das imagens no cluster"
+    difficulty: hard
+    statement: |
+      A equipe quer garantir que só rodem no cluster imagens construídas pelo pipeline oficial, e que ninguém consiga subir uma imagem adulterada. Qual controle ataca esse risco de forma direta?
+    options:
+      - text: "Rodar uma varredura semanal de vulnerabilidades em todas as imagens do registro"
+      - text: "Referenciar as imagens por digest sha256 nos manifestos do cluster, para que o conteúdo nunca mude"
+      - text: "Assinar a imagem no pipeline e verificar assinatura e procedência na admissão do cluster"
+        correct: true
+      - text: "Fixar versões por tag semântica e confiar que a rede interna impede acesso externo"
+    explanation: |
+      Assinatura mais verificação na admissão prova que a imagem veio do pipeline e não mudou, e o cluster recusa o resto. O digest fixa o conteúdo, mas qualquer imagem tem digest: ele não diz quem a construiu, e uma imagem maliciosa também pode ser referenciada por digest. A varredura procura falhas conhecidas, mas não prova origem nem integridade. Tags semânticas são mutáveis num registro, e a rede interna não protege contra quem já tem acesso de escrita a ele.
+    tags: [ci-cd, seguranca, kubernetes]
+
+  - slug: devops-senior-leaked-credential
+    title: "Chave de nuvem enviada ao repositório"
+    difficulty: medium
+    statement: |
+      Uma pessoa percebe que fez commit, num ramo, de uma chave de acesso à nuvem com permissões amplas, e o repositório é acessível por muita gente. O que deve ser feito primeiro?
+    options:
+      - text: "Revogar e rotacionar a credencial na hora, e só então limpar o histórico e revisar o uso da chave"
+        correct: true
+      - text: "Reescrever o histórico e forçar o push, o que tira a chave do repositório e encerra o vazamento"
+      - text: "Apagar o arquivo em um novo commit, porque a versão mais recente já não contém a chave"
+      - text: "Observar os logs de acesso por uma semana antes de agir, para só revogar se houver uso suspeito"
+    explanation: |
+      Uma credencial exposta deve ser considerada comprometida: revogar e rotacionar encerra o risco, e o resto (limpar histórico, auditar acessos) vem depois. Reescrever o histórico não alcança clones, caches e forks que já copiaram a chave. Apagar num novo commit mantém a chave no histórico. Esperar uma semana dá a quem a tiver visto tempo de usá-la, e a ausência de uso até agora não prova que ninguém copiou.
+    tags: [seguranca, ci-cd]
+
+  - slug: devops-senior-canary-promotion
+    title: "Critério para promover uma versão canário"
+    difficulty: hard
+    statement: |
+      Uma versão nova recebe 5% do tráfego em um deploy canário. Qual critério de promoção torna o canário confiável e repetível?
+    options:
+      - text: "Promover depois de cinco minutos se os processos subiram sem reiniciar nem falhar nas sondas de saúde"
+      - text: "Olhar a taxa de erro média do serviço inteiro e promover se ela estiver baixa durante o período"
+      - text: "Aguardar um responsável olhar os painéis e aprovar quando achar que está tudo bem, sem critério escrito"
+      - text: "Comparar erros e latência do canário com a estável, com amostra suficiente, e decidir por limites prévios"
+        correct: true
+    explanation: |
+      O canário só informa algo se for comparado com a versão estável sob a mesma carga, com amostra suficiente e limites definidos de antemão que promovem ou abortam automaticamente. Processos que sobem não dizem nada sobre erro de negócio ou latência; a média do serviço inteiro dilui 5% de tráfego e esconde a regressão; aprovação por impressão é irrepetível e depende de quem olha.
+    tags: [ci-cd, observabilidade]
+
+  - slug: devops-senior-pipeline-oidc-credentials
+    title: "Credenciais da nuvem no pipeline de entrega"
+    difficulty: hard
+    statement: |
+      O pipeline de CI guarda uma chave de acesso estática da nuvem, com permissões amplas, como segredo para publicar a aplicação. A chave nunca foi trocada. Qual mudança reduz mais o risco de um vazamento a partir do pipeline?
+    options:
+      - text: "Rotacionar a chave estática todo mês, registrando a data da troca num calendário da equipe"
+      - text: "Federar o pipeline por OIDC, trocando o token do job por credencial temporária de escopo mínimo"
+        correct: true
+      - text: "Cifrar a variável no CI e mascarar o valor nos logs, mantendo a mesma chave de longa duração"
+      - text: "Guardar a chave num cofre de segredos e ler o cofre com outra chave estática guardada no pipeline"
+    explanation: |
+      Com federação OIDC, o job recebe um token de identidade assinado pelo CI e o troca por uma credencial que vale minutos, limitada ao repositório e ao ramo configurados na relação de confiança: não existe segredo de longa duração para vazar. Rotacionar todo mês ainda deixa semanas de exposição e uma chave ampla. Cifrar e mascarar protege o valor nos logs, mas a chave segue válida para quem a obtiver. O cofre lido com outra chave estática só empurra o problema um degrau para trás.
+    tags: [ci-cd, seguranca, nuvem]
+
+  - slug: devops-senior-async-replication-rpo
+    title: "Failover com replicação assíncrona entre regiões"
+    difficulty: hard
+    statement: |
+      Um banco usa replicação assíncrona da região primária para uma secundária, com failover automático. A região primária cai de repente. O que se pode afirmar sobre a recuperação?
+    options:
+      - text: "Não há perda de dados, pois a réplica está sempre idêntica à primária"
+      - text: "Gravações ainda não replicadas podem se perder, então o RPO é maior que zero"
+        correct: true
+      - text: "O RTO é zero, já que a réplica já existe em outra região e dispensa qualquer etapa"
+      - text: "O RPO depende só do tempo que a aplicação leva para subir na região secundária"
+    explanation: |
+      Na replicação assíncrona a primária confirma a gravação antes de a réplica recebê-la; se a região cai, o que estava em trânsito se perde, e esse é o RPO (quanto de dados se aceita perder). O RTO é o tempo até voltar a operar e inclui detecção, promoção e redirecionamento, nunca é zero na prática. O tempo de subida da aplicação compõe o RTO, não o RPO. Zero perda exige replicação síncrona, com custo de latência.
+    tags: [nuvem, banco-de-dados, arquitetura]
+
+  - slug: devops-senior-restore-drill
+    title: "Confiança em backups e planos de recuperação"
+    difficulty: medium
+    statement: |
+      Os backups diários de um banco aparecem como concluídos com sucesso nos relatórios há meses, mas ninguém nunca restaurou um deles. Qual prática dá confiança real de que a recuperação funciona?
+    options:
+      - text: "Passar os backups para a cada hora, para reduzir a quantidade de dados em risco"
+      - text: "Copiar os backups para mais uma região, para que nenhuma falha única os atinja"
+      - text: "Conferir o tamanho e a data dos arquivos gerados, já que o job termina com sucesso e sem avisos"
+      - text: "Restaurar com regularidade num ambiente isolado e medir o tempo contra o RTO combinado"
+        correct: true
+    explanation: |
+      Backup só vale se a restauração funcionar dentro do tempo prometido, e isso só se prova restaurando de verdade, com frequência, e medindo. Aumentar a frequência ou o número de cópias melhora a proteção contra perda, mas copia também um backup que pode estar corrompido ou incompleto. Um job que termina sem erro ou um arquivo com tamanho plausível não garantem que o conteúdo é consistente nem que o procedimento funciona.
+    tags: [nuvem, banco-de-dados]
+
+  - slug: devops-senior-trace-tail-sampling
+    title: "Amostragem de traços que não perde os erros"
+    difficulty: hard
+    statement: |
+      Um sistema com muito tráfego guarda 1% dos traços, decidido na entrada de cada requisição. Os erros raros e as requisições muito lentas quase nunca aparecem entre os traços guardados. O que resolve melhor, mantendo o custo sob controle?
+    options:
+      - text: "Amostrar pela cauda: decidir com o traço pronto, guardando erros, lentos e parte do resto"
+        correct: true
+      - text: "Subir a amostragem na entrada para 100%, aceitando o custo de armazenar todos os traços"
+      - text: "Amostrar na entrada com taxas diferentes por serviço, maiores nos serviços mais críticos"
+      - text: "Guardar apenas os traços das rotas mais acessadas, que concentram a maior parte do tráfego"
+    explanation: |
+      Na amostragem pela cauda a decisão sai depois que o traço está completo, então dá para guardar todos os que tiveram erro ou latência alta e só uma fração dos normais; o preço é um coletor que agrupa os trechos de cada traço (por id) e segura memória até decidir. Amostrar 100% resolve a perda, mas não o custo. Taxas por serviço continuam decidindo antes de saber o desfecho. Rotas populares são justamente onde o 1% já funciona; o erro raro está em qualquer rota.
+    tags: [observabilidade]

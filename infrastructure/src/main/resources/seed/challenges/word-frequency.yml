@@ -1,0 +1,114 @@
+slug: word-frequency
+title: Palavra mais frequente
+area: frontend
+level: junior
+difficulty: medium
+tags: [strings, hash-map]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dado um texto, devolva a palavra que aparece mais vezes, em letras minúsculas.
+
+  Regras: uma palavra é uma sequência de letras (com ou sem acento) e dígitos; qualquer outro caractere, como espaço ou pontuação, separa palavras. Maiúsculas e minúsculas não importam (`Deploy` e `deploy` são a mesma palavra). Em caso de empate, vence a palavra que aparece primeiro no texto. Se o texto não tiver nenhuma palavra, devolva a string vazia.
+
+  Exemplo: em `"Deploy, teste, deploy! Teste? deploy."`, `deploy` aparece três vezes e `teste` duas, então a resposta é `"deploy"`.
+approachSummary: |
+  Separe o texto em palavras, converta cada uma para minúsculas e conte num mapa que preserve a ordem da primeira ocorrência (`LinkedHashMap` em Java, `dict` em Python, `Map` em JavaScript). Depois percorra o mapa na ordem de inserção e troque de vencedora só quando a contagem for estritamente maior, o que resolve o empate a favor da primeira. O(n) de tempo e O(k) de memória para as k palavras distintas.
+languages:
+  java:
+    functionName: topWord
+    starterCode: |
+      class Solution {
+          public String topWord(String text) {
+              // sua solução
+              return "";
+          }
+      }
+    referenceSolution: |
+      import java.util.LinkedHashMap;
+      import java.util.Locale;
+      import java.util.Map;
+
+      class Solution {
+          public String topWord(String text) {
+              Map<String, Integer> counts = new LinkedHashMap<>();
+              StringBuilder word = new StringBuilder();
+              for (int i = 0; i <= text.length(); i++) {
+                  char c = i < text.length() ? text.charAt(i) : ' ';
+                  if (Character.isLetterOrDigit(c)) {
+                      word.append(c);
+                  } else if (word.length() > 0) {
+                      counts.merge(word.toString().toLowerCase(Locale.ROOT), 1, Integer::sum);
+                      word.setLength(0);
+                  }
+              }
+              String best = "";
+              int bestCount = 0;
+              for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+                  if (entry.getValue() > bestCount) {
+                      best = entry.getKey();
+                      bestCount = entry.getValue();
+                  }
+              }
+              return best;
+          }
+      }
+  python:
+    functionName: top_word
+    starterCode: |
+      class Solution:
+          def top_word(self, text):
+              # sua solução
+              return ""
+    referenceSolution: |
+      class Solution:
+          def top_word(self, text):
+              counts = {}
+              word = []
+              for c in text + " ":
+                  if c.isalnum():
+                      word.append(c)
+                  elif word:
+                      key = "".join(word).lower()
+                      counts[key] = counts.get(key, 0) + 1
+                      word = []
+              best, best_count = "", 0
+              for key, count in counts.items():
+                  if count > best_count:
+                      best, best_count = key, count
+              return best
+  javascript:
+    functionName: topWord
+    starterCode: |
+      class Solution {
+        topWord(text) {
+          // sua solução
+          return "";
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        topWord(text) {
+          const words = text.toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
+          const counts = new Map();
+          for (const word of words) counts.set(word, (counts.get(word) || 0) + 1);
+          let best = "";
+          let bestCount = 0;
+          for (const [word, count] of counts) {
+            if (count > bestCount) {
+              best = word;
+              bestCount = count;
+            }
+          }
+          return best;
+        }
+      }
+testCases:
+  - { args: ["Deploy, teste, deploy! Teste? deploy."], expected: "deploy", visible: true }
+  - { args: ["banco cache banco cache fila"], expected: "banco", visible: true }
+  - { args: ["b a a b"], expected: "b", visible: false }
+  - { args: ["API api Api rest REST"], expected: "api", visible: false }
+  - { args: ["Ação, ação e reação."], expected: "ação", visible: false }
+  - { args: [""], expected: "", visible: false }
+  - { args: ["!!! ... ?"], expected: "", visible: false }

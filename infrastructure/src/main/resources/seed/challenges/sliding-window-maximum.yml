@@ -1,0 +1,110 @@
+slug: sliding-window-maximum
+title: Máximo de cada janela deslizante
+area: backend
+level: senior
+difficulty: hard
+tags: [arrays, estruturas-de-dados, complexidade]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dado um array de inteiros `nums` e um inteiro `k` (com `1 <= k <= nums.length`), uma janela de tamanho `k` começa nas `k` primeiras posições e avança uma posição por vez até o fim do array. Devolva um array com o maior valor de cada posição da janela, na ordem em que ela passa.
+
+  Existem `nums.length - k + 1` janelas. O array pode ter valores repetidos e negativos. Limites: `1 <= nums.length <= 100000` e `-10000 <= nums[i] <= 10000`. Tente chegar a O(n).
+
+  Exemplo: para `nums = [1, 3, -1, -3, 5, 3, 6, 7]` e `k = 3`, a resposta é `[3, 3, 5, 5, 6, 7]`.
+approachSummary: |
+  Calcular o máximo de cada janela do zero custa O(n * k). A solução esperada usa uma deque de índices que mantém os valores em ordem decrescente: ao chegar em `i`, remova do fim os índices cujo valor é menor ou igual a `nums[i]` (nunca mais serão o máximo), acrescente `i`, remova do começo o índice que saiu da janela (`i - k`) e, quando a primeira janela estiver completa (`i >= k - 1`), o começo da deque é o máximo. Cada índice entra e sai uma vez: O(n) de tempo e O(k) de memória, a solução esperada (a força bruta, O(n * k), também passa nos limites do enunciado).
+languages:
+  java:
+    functionName: maxSlidingWindow
+    starterCode: |
+      class Solution {
+          public int[] maxSlidingWindow(int[] nums, int k) {
+              // sua solução
+              return new int[0];
+          }
+      }
+    referenceSolution: |
+      import java.util.ArrayDeque;
+      import java.util.Deque;
+
+      class Solution {
+          public int[] maxSlidingWindow(int[] nums, int k) {
+              int n = nums.length;
+              int[] result = new int[n - k + 1];
+              Deque<Integer> window = new ArrayDeque<>();
+              for (int i = 0; i < n; i++) {
+                  while (!window.isEmpty() && nums[window.peekLast()] <= nums[i]) {
+                      window.pollLast();
+                  }
+                  window.addLast(i);
+                  if (window.peekFirst() <= i - k) {
+                      window.pollFirst();
+                  }
+                  if (i >= k - 1) {
+                      result[i - k + 1] = nums[window.peekFirst()];
+                  }
+              }
+              return result;
+          }
+      }
+  python:
+    functionName: max_sliding_window
+    starterCode: |
+      class Solution:
+          def max_sliding_window(self, nums, k):
+              # sua solução
+              return []
+    referenceSolution: |
+      from collections import deque
+
+
+      class Solution:
+          def max_sliding_window(self, nums, k):
+              result = []
+              window = deque()
+              for i, value in enumerate(nums):
+                  while window and nums[window[-1]] <= value:
+                      window.pop()
+                  window.append(i)
+                  if window[0] <= i - k:
+                      window.popleft()
+                  if i >= k - 1:
+                      result.append(nums[window[0]])
+              return result
+  javascript:
+    functionName: maxSlidingWindow
+    starterCode: |
+      class Solution {
+        maxSlidingWindow(nums, k) {
+          // sua solução
+          return [];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        maxSlidingWindow(nums, k) {
+          const result = [];
+          const window = [];
+          let head = 0;
+          for (let i = 0; i < nums.length; i++) {
+            while (window.length > head && nums[window[window.length - 1]] <= nums[i]) {
+              window.pop();
+            }
+            window.push(i);
+            if (window[head] <= i - k) head++;
+            if (i >= k - 1) result.push(nums[window[head]]);
+          }
+          return result;
+        }
+      }
+testCases:
+  - { args: [[1, 3, -1, -3, 5, 3, 6, 7], 3], expected: [3, 3, 5, 5, 6, 7], visible: true }
+  - { args: [[1], 1], expected: [1], visible: true }
+  - { args: [[9, 8, 7, 6], 2], expected: [9, 8, 7], visible: false }
+  - { args: [[1, 2, 3, 4, 5], 5], expected: [5], visible: false }
+  - { args: [[4, 4, 4, 4], 2], expected: [4, 4, 4], visible: false }
+  - { args: [[-7, -8, 7, 5, 7, 1, 6, 0], 4], expected: [7, 7, 7, 7, 7], visible: false }
+  - { args: [[1, -1], 1], expected: [1, -1], visible: false }
+  - { args: [[5, 3, 4, 1, 2, 6, 0, 9], 3], expected: [5, 4, 4, 6, 6, 9], visible: false }

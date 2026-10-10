@@ -1,0 +1,182 @@
+area: frontend
+level: senior
+questions:
+  - slug: frontend-senior-xss-innerhtml-comentarios
+    title: "Comentários de usuários e o `innerHTML`"
+    difficulty: easy
+    statement: |
+      Uma tela de comentários faz `elemento.innerHTML = comentario.texto`, e o texto vem de outros usuários. Alguém postou `<img src=x onerror="roubar()">` e o script rodou no navegador de quem abriu a página. Qual correção resolve a causa, e não só esse payload?
+    options:
+      - text: "Remover as ocorrências da palavra `script` do texto antes de atribuir ao `innerHTML`"
+      - text: "Codificar o texto em Base64 no servidor e decodificar no cliente antes de atribuir"
+      - text: "Usar `textContent` (ou o escape do framework) e, se precisar de HTML, um sanitizador mantido"
+        correct: true
+      - text: "Validar o comentário com uma expressão regular no front-end antes de enviá-lo ao servidor da aplicação"
+    explanation: |
+      O problema é tratar dado de usuário como marcação. `textContent` (e o escape automático dos frameworks) coloca o valor como texto, sem interpretá-lo; se o produto precisa de HTML, uma biblioteca de sanitização madura e mantida (como o DOMPurify), com lista de tags permitidas, é o caminho. Remover `script` é lista de bloqueio e falha na hora: o payload do enunciado nem usa essa tag. Base64 só muda a forma e o cliente decodifica de volta para o mesmo texto perigoso. Validar só no front-end não protege nada, porque a requisição pode ser feita sem passar pela tela.
+    tags: [seguranca, dom]
+
+  - slug: frontend-senior-token-localstorage-xss
+    title: "Onde guardar o token de acesso de uma SPA"
+    difficulty: medium
+    statement: |
+      Uma SPA guarda o access token da própria API em `localStorage`. A revisão de segurança aponta que qualquer XSS permitiria roubar o token e usá-lo de fora do navegador da vítima. Qual mudança reduz esse risco de forma real?
+    options:
+      - text: "Usar cookie `HttpOnly`, `Secure` e `SameSite`, com proteção contra CSRF nas rotas que alteram estado"
+        correct: true
+      - text: "Cifrar o token com uma chave embutida no bundle antes de gravá-lo no `localStorage` do navegador"
+      - text: "Gravar o token em `sessionStorage`, já que os scripts da página não conseguem ler esse armazenamento"
+      - text: "Trocar o nome da chave por um valor aleatório a cada build, para dificultar a busca"
+    explanation: |
+      Um cookie `HttpOnly` não é legível por JavaScript, então um XSS não consegue copiar o valor para usá-lo em outro lugar (ele ainda consegue disparar requisições da página, por isso a CSP e o escape continuam obrigatórios). Em troca entra o CSRF, tratado com `SameSite` e token anti-CSRF. Cifrar com chave no bundle não ajuda: o script injetado lê a chave junto. `sessionStorage` é igualmente acessível por scripts da mesma origem; só muda o tempo de vida. Esconder o nome da chave é obscuridade, e o atacante enumera `localStorage` inteiro.
+    tags: [seguranca, autenticacao, http]
+
+  - slug: frontend-senior-csp-nonce-strict-dynamic
+    title: "CSP que de fato barra scripts injetados"
+    difficulty: medium
+    statement: |
+      O time quer uma Content Security Policy que reduza o impacto de XSS, mas a aplicação tem scripts inline gerados pelo servidor e carrega bibliotecas de vários CDNs. Qual política protege de verdade sem quebrar a página?
+    options:
+      - text: Listar os domínios dos CDNs em `script-src` e manter `'unsafe-inline'` para os scripts inline
+      - text: Usar `script-src https:` para cobrir todos os CDNs de uma vez, sem listar domínio por domínio
+      - text: Publicar a política só em modo `Report-Only`, de forma permanente, para nunca bloquear páginas
+      - text: "Nonce aleatório por resposta nos scripts legítimos e `'strict-dynamic'`, sem `'unsafe-inline'`"
+        correct: true
+    explanation: |
+      Com nonce por resposta, só roda script que o servidor marcou; um script injetado por XSS não conhece o nonce, e `'strict-dynamic'` deixa os scripts confiáveis carregarem os seus dependentes sem uma allowlist frágil. `'unsafe-inline'` anula justamente a proteção contra injeção, e allowlists de CDN costumam ter pontos de bypass (endpoints JSONP, bibliotecas que executam código). `https:` libera qualquer origem HTTPS, inclusive a do atacante. `Report-Only` é ótimo para ensaiar a política, mas permanente não bloqueia nada.
+    tags: [seguranca, http]
+
+  - slug: frontend-senior-lcp-imagem-hero-lazy
+    title: "LCP alto com imagem principal tardia"
+    difficulty: medium
+    statement: |
+      Nos dados de usuários reais (dados de campo), o LCP no celular está em 4,8 s. O elemento medido é a imagem principal do topo, que tem `loading="lazy"` e só aparece na rede depois de o JavaScript montar o componente. Qual ação ataca a causa?
+    options:
+      - text: "Dividir o bundle em mais chunks para que o JavaScript chegue mais rápido ao navegador"
+      - text: "Tirar o `lazy` da imagem principal, mantê-la no HTML e priorizá-la com `fetchpriority=high`"
+        correct: true
+      - text: "Aumentar o `max-age` da imagem no CDN para um ano, reduzindo requisições repetidas"
+      - text: "Embutir a imagem em Base64 no HTML para eliminar a requisição extra da imagem"
+    explanation: |
+      O LCP é atrasado por descoberta tardia e por baixa prioridade: o navegador só pede a imagem depois do JavaScript, e o `lazy` ainda a trata como item de segundo plano. Deixar o `<img>` no HTML e priorizar o recurso corrige os dois atrasos. Dividir o bundle pode ajudar outras métricas, mas não torna a imagem descoberta mais cedo. Cache longo só beneficia a segunda visita, e o problema medido é a primeira. Base64 incha o HTML, impede cache próprio da imagem e atrasa tudo que vem depois.
+    tags: [performance-web, html]
+
+  - slug: frontend-senior-code-splitting-dashboard
+    title: "Divisão de pacote para um gráfico pesado"
+    difficulty: medium
+    statement: |
+      O bundle único de uma aplicação tem 2,3 MB. Quase metade vem de uma biblioteca de gráficos usada só no painel de relatórios, que 10% dos usuários abrem. Qual estratégia melhora a carga inicial sem criar outro problema?
+    options:
+      - text: "Marcar o script único como `async`, para que ele não bloqueie a análise do HTML da página"
+      - text: "Gerar um chunk para cada componente, cerca de 400 arquivos, para baixar só o estritamente necessário"
+      - text: "Carregar o gráfico com `import()` dinâmico na rota do painel, com prefetch quando a visita for provável"
+        correct: true
+      - text: "Minificar de forma mais agressiva e remover todos os comentários e espaços do código-fonte"
+    explanation: |
+      Importação dinâmica por rota tira da carga inicial o que quase ninguém usa, e o prefetch (por exemplo, ao passar o mouse no link) esconde a espera de quem vai usar. `async` muda quando o script executa, não o tamanho a baixar. Centenas de chunks minúsculos criam cascatas de requisições e perdem compressão, trocando um problema por outro. Minificação já faz parte do build normal e não elimina uma biblioteca inteira que não é necessária no primeiro carregamento.
+    tags: [performance-web, javascript]
+
+  - slug: frontend-senior-inp-handler-bloqueante
+    title: "INP ruim em filtro com lista grande"
+    difficulty: medium
+    statement: |
+      Na tela de busca, o INP do campo de filtro está em 600 ms. O profiler mostra que o handler de `input` filtra 20 mil itens e renderiza o resultado de forma síncrona, ocupando a thread principal por cerca de 300 ms. Qual correção resolve o problema?
+    options:
+      - text: "Dividir o trabalho e adiar a parte não urgente com uma transição, liberando a thread principal"
+        correct: true
+      - text: "Declarar o handler como `async` com `await` em cada passo, para que ele deixe de bloquear a thread principal"
+      - text: "Envolver a filtragem em `useMemo` com a lista como dependência, para não refazer o cálculo a cada render"
+      - text: "Aplicar `will-change: transform` na lista, para promovê-la a uma camada própria de composição"
+    explanation: |
+      O INP mede o tempo até o próximo quadro depois da interação, e aqui a thread está ocupada com JavaScript e renderização. Dar o controle de volta ao navegador, quebrando o trabalho e marcando a atualização da lista como não urgente, deixa o quadro do campo sair logo e ataca essa causa; reduzir o que é renderizado também diminui o custo, mas é outra frente, e sem devolver a thread o quadro da interação continua esperando o trabalho inteiro. `async` não move o código para outra thread: o trecho síncrono continua bloqueando. `useMemo` não ajuda: o termo digitado muda a cada tecla, então o filtro é refeito do mesmo jeito e o custo é o mesmo. `will-change` ajuda animações compostas, mas não encurta filtragem e renderização em JavaScript.
+    tags: [performance-web, react]
+
+  - slug: frontend-senior-ssr-hidratacao-divergente
+    title: "Aviso de hidratação com hora no render"
+    difficulty: hard
+    statement: |
+      Uma página renderizada no servidor exibe "Atualizado às 14:32", calculado com `new Date().toLocaleTimeString()` durante o render. Em produção aparecem avisos de divergência na hidratação e o texto pisca. O texto precisa mostrar a hora do usuário. Qual solução está correta?
+    options:
+      - text: Aplicar `suppressHydrationWarning` na raiz da aplicação para silenciar qualquer divergência
+      - text: Desativar o SSR da rota inteira, já que hidratação não suporta conteúdo dinâmico
+      - text: "Fixar o fuso do servidor em UTC para que servidor e cliente gerem exatamente o mesmo texto"
+      - text: "Enviar o instante em ISO no HTML e formatá-lo no fuso do usuário depois da montagem"
+        correct: true
+    explanation: |
+      A hidratação espera que a primeira renderização no cliente produza o mesmo HTML que o servidor mandou. Hora e fuso diferem entre os dois ambientes, então a saída diverge. Mandar um valor determinístico e converter para o fuso do usuário depois da montagem mantém o HTML igual na hidratação e a exibição correta logo em seguida. `suppressHydrationWarning` só vale para o próprio elemento: na raiz não silencia nada nos filhos, e mesmo no elemento do horário o React mantém o texto do servidor, com a hora errada. Fixar UTC no servidor iguala o formato, mas o cliente continua em outro fuso, e o texto precisa mostrar a hora do usuário. Desligar o SSR da rota joga fora o ganho por causa de um único campo.
+    tags: [react, performance-web]
+
+  - slug: frontend-senior-microfrontends-custo-real
+    title: "Micro-frontends: quando o custo compensa"
+    difficulty: hard
+    statement: |
+      Três times mantêm um produto web e a liderança propõe migrar para micro-frontends "para escalar". Qual avaliação descreve corretamente o trade-off?
+    options:
+      - text: "Eliminam a necessidade de design system, porque cada time passa a escolher a sua biblioteca visual e seus próprios padrões"
+      - text: "Dão deploy independente a times autônomos, ao custo de dependências duplicadas, estado compartilhado e contratos"
+        correct: true
+      - text: "Melhoram o desempenho de carga, porque cada micro-frontend é menor que o aplicativo inteiro e baixa só o que usa"
+      - text: Corrigem acoplamento de domínio mal definido, pois as fronteiras técnicas forçam o código a se separar
+    explanation: |
+      O benefício é organizacional: times que precisam publicar sem coordenar. O custo é técnico e contínuo: bibliotecas carregadas em duplicidade, navegação e estado entre pedaços, consistência visual e contratos versionados. Com poucos times, um monólito modular costuma entregar mais. A primeira alternativa inverte a realidade, pois sem design system a interface diverge. A terceira ignora que várias cargas e dependências repetidas costumam piorar o desempenho. A quarta confunde fronteira técnica com fronteira de domínio; separar um domínio mal desenhado só espalha o acoplamento por rede.
+    tags: [arquitetura]
+
+  - slug: frontend-senior-design-system-quebra-compativel
+    title: "Mudar a API de um componente em 40 apps"
+    difficulty: hard
+    statement: |
+      Um design system é consumido por cerca de 40 aplicações de times diferentes. O componente `Button` precisa trocar a prop `type` por `variant`. Qual estratégia de mudança minimiza o dano e ainda leva a migração até o fim?
+    options:
+      - text: "Adicionar `variant` numa minor, depreciar `type` com aviso e codemod, e remover `type` na major seguinte"
+        correct: true
+      - text: "Trocar `type` por `variant` direto numa minor e avisar no canal do time; quem quebrar corrige no próprio ritmo"
+      - text: Marcar uma data em que todas as 40 apps migrem juntas e segurar o release até a última aderir
+      - text: "Manter as duas props para sempre e fixar a versão antiga nas apps dos times que não quiserem migrar"
+    explanation: |
+      A minor que aceita as duas props não quebra ninguém; o aviso e o codemod levam os times a migrar, e a remoção na major seguinte encerra a mudança, separando o ritmo do design system do ritmo de cada time. Trocar a prop direto numa minor é uma quebra publicada como compatível e viola o versionamento semântico e derruba builds sem aviso. Coordenar 40 times numa data só transforma o time mais lento em gargalo de todos. Nunca remover a prop antiga congela a API, multiplica casos de teste e deixa o sistema com duas verdades para sempre.
+    tags: [arquitetura, react]
+
+  - slug: frontend-senior-acessibilidade-em-escala
+    title: "Acessibilidade consistente em 15 times"
+    difficulty: hard
+    statement: |
+      Uma empresa com 15 times de frontend quer acessibilidade consistente em todos os produtos. Qual combinação costuma dar o resultado mais duradouro?
+    options:
+      - text: "Contratar uma auditoria externa uma vez por ano e corrigir todo o relatório num único sprint"
+      - text: "Exigir zero violações de um verificador automático no CI para aprovar qualquer mudança"
+      - text: "Embutir foco, teclado e ARIA no design system, com checagem no CI e testes manuais"
+        correct: true
+      - text: "Treinar todos os desenvolvedores e publicar um guia no wiki, sem mudar os componentes existentes"
+    explanation: |
+      Quando o comportamento acessível vem pronto nos componentes compartilhados, cada produto herda a correção, e o CI evita regressão. A automação sozinha encontra só uma parte dos problemas (rótulos ausentes, contraste); fluxos de foco, ordem de leitura e clareza do texto exigem teste manual com tecnologia assistiva. Auditoria anual vira uma fotografia que envelhece em semanas. Treinamento e guia sem componentes dependem de memória e boa vontade de 15 times, e a consistência se perde.
+    tags: [acessibilidade, testes, arquitetura]
+
+  - slug: frontend-senior-observabilidade-erros-no-cliente
+    title: "Monitorar erros de JavaScript em produção"
+    difficulty: hard
+    statement: |
+      Uma aplicação com 2 milhões de sessões por dia precisa de observabilidade no navegador. Os stack traces chegam minificados, há ruído de extensões do navegador e o volume de eventos preocupa o custo. Qual desenho funciona melhor?
+    options:
+      - text: "Capturar todo evento e toda sessão sem amostragem nem limite e enviar cada ocorrência na hora, uma a uma"
+      - text: "Enviar junto o corpo das requisições e os campos preenchidos nos formulários para facilitar a reprodução do erro"
+      - text: "Confiar só nos logs do servidor, já que os erros do navegador acabam aparecendo como 4xx e 5xx na API"
+      - text: "Source maps privados por release, agrupamento, limite de taxa, filtro de extensões e remoção de dados pessoais"
+        correct: true
+    explanation: |
+      Source maps por release tornam os traces legíveis e ligam o erro ao deploy que o causou; agrupar e limitar taxa evita que um loop de erro gere milhões de eventos; filtrar origens de extensões tira o ruído; e remover dados pessoais evita um problema de privacidade. Sem amostragem nem limite, o custo explode e uma falha vira tempestade. Enviar corpo de requisição e campos de formulário vaza senhas e dados sensíveis. Os logs do servidor não enxergam erros de renderização, exceções de JavaScript nem lentidão percebida no cliente.
+    tags: [observabilidade, javascript]
+
+  - slug: frontend-senior-ssr-cache-conteudo-personalizado
+    title: "Cache de HTML renderizado com conteúdo do usuário"
+    difficulty: hard
+    statement: |
+      Uma página de produto renderizada no servidor inclui no cabeçalho "Olá, <nome do usuário>". Para reduzir carga, propõem cachear o HTML completo no CDN. Qual avaliação e qual desenho estão corretos?
+    options:
+      - text: "Cachear o HTML completo com `Cache-Control: public` e TTL curto, porque o TTL limita o impacto"
+      - text: "Cachear no CDN só a parte comum e buscar a saudação depois, em requisição privada"
+        correct: true
+      - text: "Cachear por URL e adicionar `Vary: User-Agent`, assim cada tipo de navegador recebe sua cópia"
+      - text: "Desligar todo o cache das páginas renderizadas e escalar os servidores de renderização na horizontal"
+    explanation: |
+      Cachear HTML com dado do usuário num cache compartilhado serve a página de uma pessoa a outra, o que é vazamento de dados, e um TTL curto só reduz a janela, não a elimina. Dividir o conteúdo mantém o ganho do CDN para o que é igual para todos e trata o que é pessoal como resposta privada. `Vary: User-Agent` separa por navegador, não por usuário, então o vazamento continua. Desligar o cache resolve a segurança, mas descarta o ganho de desempenho e custa caro em servidores sem necessidade.
+    tags: [cache, seguranca, http]

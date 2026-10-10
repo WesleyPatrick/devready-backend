@@ -1,0 +1,51 @@
+# Materiais de estudo de cada competência, com o link conferido. A ordem aqui é a ordem de exibição
+# na competência.
+- { competency: estruturas-de-dados-e-algoritmos, title: "Projeto de Algoritmos, de Paulo Feofiloff", url: "https://www.ime.usp.br/~pf/algoritmos/", type: livro, language: pt, free: true }
+- { competency: estruturas-de-dados-e-algoritmos, title: "Introduction to Algorithms (MIT 6.006)", url: "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/", type: curso, language: en, free: true }
+- { competency: estruturas-de-dados-e-algoritmos, title: "NeetCode Roadmap", url: "https://neetcode.io/roadmap", type: curso, language: en, free: true }
+- { competency: design-de-sistemas, title: "The System Design Primer", url: "https://github.com/donnemartin/system-design-primer", type: artigo, language: en, free: true }
+- { competency: design-de-sistemas, title: "System Design (Tech Interview Handbook)", url: "https://www.techinterviewhandbook.org/system-design/", type: artigo, language: en, free: true }
+- { competency: design-de-sistemas, title: "Designing Data-Intensive Applications", url: "https://dataintensive.net/", type: livro, language: en, free: false }
+- { competency: sql-e-modelagem-de-dados, title: "Use The Index, Luke", url: "https://use-the-index-luke.com/sql/table-of-contents", type: livro, language: en, free: true }
+- { competency: sql-e-modelagem-de-dados, title: "PostgreSQL Tutorial: The SQL Language", url: "https://www.postgresql.org/docs/current/tutorial-sql.html", type: documentacao, language: en, free: true }
+- { competency: apis-rest, title: "HTTP (MDN)", url: "https://developer.mozilla.org/pt-BR/docs/Web/HTTP", type: documentacao, language: pt, free: true }
+- { competency: apis-rest, title: "Boas práticas de design de API web", url: "https://learn.microsoft.com/pt-br/azure/architecture/best-practices/api-design", type: artigo, language: pt, free: true }
+- { competency: apis-rest, title: "RFC 9110: HTTP Semantics", url: "https://www.rfc-editor.org/rfc/rfc9110.html", type: documentacao, language: en, free: true }
+- { competency: testes-automatizados, title: "Engenharia de Software Moderna, cap. 8: Testes", url: "https://engsoftmoderna.info/cap8.html", type: livro, language: pt, free: true }
+- { competency: testes-automatizados, title: "The Practical Test Pyramid", url: "https://martinfowler.com/articles/practical-test-pyramid.html", type: artigo, language: en, free: true }
+- { competency: git-e-fluxo-de-codigo, title: "Pro Git, em português", url: "https://git-scm.com/book/pt-br/v2", type: livro, language: pt, free: true }
+- { competency: git-e-fluxo-de-codigo, title: "Comparação de fluxos de trabalho (Atlassian)", url: "https://www.atlassian.com/br/git/tutorials/comparing-workflows", type: artigo, language: pt, free: true }
+- { competency: git-e-fluxo-de-codigo, title: "Google Engineering Practices: Code Review", url: "https://google.github.io/eng-practices/review/", type: documentacao, language: en, free: true }
+- { competency: nuvem, title: "O que é computação em nuvem? (AWS)", url: "https://aws.amazon.com/pt/what-is-cloud-computing/", type: artigo, language: pt, free: true }
+- { competency: nuvem, title: "Fundamentos do Azure: conceitos de nuvem", url: "https://learn.microsoft.com/pt-br/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/", type: curso, language: pt, free: true }
+- { competency: containers-e-orquestracao, title: "Visão geral do Kubernetes", url: "https://kubernetes.io/pt-br/docs/concepts/overview/", type: documentacao, language: pt, free: true }
+- { competency: containers-e-orquestracao, title: "Kubernetes básico (tutorial)", url: "https://kubernetes.io/pt-br/docs/tutorials/kubernetes-basics/", type: curso, language: pt, free: true }
+- { competency: containers-e-orquestracao, title: "Docker: Get started", url: "https://docs.docker.com/get-started/", type: documentacao, language: en, free: true }
+- { competency: ci-cd, title: "Entenda o GitHub Actions", url: "https://docs.github.com/pt/actions/get-started/understand-github-actions", type: documentacao, language: pt, free: true }
+- { competency: ci-cd, title: "O que é integração contínua? (Microsoft)", url: "https://learn.microsoft.com/pt-br/devops/develop/what-is-continuous-integration", type: artigo, language: pt, free: true }
+- { competency: ci-cd, title: "Continuous Integration (Martin Fowler)", url: "https://martinfowler.com/articles/continuousIntegration.html", type: artigo, language: en, free: true }
+- { competency: mensageria-e-processamento-assincrono, title: "Estilo de arquitetura orientada a eventos", url: "https://learn.microsoft.com/pt-br/azure/architecture/guide/architecture-styles/event-driven", type: artigo, language: pt, free: true }
+- { competency: mensageria-e-processamento-assincrono, title: "RabbitMQ Tutorials", url: "https://www.rabbitmq.com/tutorials", type: curso, language: en, free: true }
+- { competency: mensageria-e-processamento-assincrono, title: "Apache Kafka: Introduction", url: "https://kafka.apache.org/intro/", type: documentacao, language: en, free: true }
+- { competency: observabilidade, title: "Introdução à observabilidade (OpenTelemetry)", url: "https://opentelemetry.io/pt/docs/concepts/observability-primer/", type: documentacao, language: pt, free: true }
+- { competency: observabilidade, title: "Monitoring Distributed Systems (Google SRE)", url: "https://sre.google/sre-book/monitoring-distributed-systems/", type: livro, language: en, free: true }
+- { competency: seguranca-de-aplicacoes, title: "OWASP Top 10", url: "https://top10.owasp.org/", type: documentacao, language: en, free: true }
+- { competency: seguranca-de-aplicacoes, title: "OWASP Cheat Sheet Series", url: "https://cheatsheetseries.owasp.org/", type: documentacao, language: en, free: true }
+- { competency: java, title: "Learn Java (dev.java)", url: "https://dev.java/learn/", type: documentacao, language: en, free: true }
+- { competency: kotlin, title: "Kotlin: Get started", url: "https://kotlinlang.org/docs/getting-started.html", type: documentacao, language: en, free: true }
+- { competency: kotlin, title: "Kotlin Koans", url: "https://play.kotlinlang.org/koans/overview", type: curso, language: en, free: true }
+- { competency: python, title: "O tutorial de Python", url: "https://docs.python.org/pt-br/3/tutorial/", type: documentacao, language: pt, free: true }
+- { competency: javascript-e-typescript, title: "Guia de JavaScript (MDN)", url: "https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Guide", type: documentacao, language: pt, free: true }
+- { competency: javascript-e-typescript, title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/handbook/intro.html", type: documentacao, language: en, free: true }
+- { competency: go, title: "A Tour of Go", url: "https://go.dev/tour/", type: curso, language: en, free: true }
+- { competency: go, title: "Effective Go", url: "https://go.dev/doc/effective_go", type: documentacao, language: en, free: true }
+- { competency: c-sharp, title: "Documentação do C#", url: "https://learn.microsoft.com/pt-br/dotnet/csharp/", type: documentacao, language: pt, free: true }
+- { competency: c-sharp, title: "Um tour pela linguagem C#", url: "https://learn.microsoft.com/pt-br/dotnet/csharp/tour-of-csharp/", type: artigo, language: pt, free: true }
+- { competency: spring, title: "Spring Guides", url: "https://spring.io/guides/", type: curso, language: en, free: true }
+- { competency: spring, title: "Spring Boot Reference", url: "https://docs.spring.io/spring-boot/index.html", type: documentacao, language: en, free: true }
+- { competency: react, title: "Aprenda React (react.dev)", url: "https://pt-br.react.dev/learn", type: documentacao, language: pt, free: true }
+- { competency: node-js, title: "Introduction to Node.js", url: "https://nodejs.org/learn/getting-started/introduction-to-nodejs", type: documentacao, language: en, free: true }
+- { competency: comunicacao-e-trabalho-em-equipe, title: "Behavioral Interviews (Tech Interview Handbook)", url: "https://www.techinterviewhandbook.org/behavioral-interview/", type: artigo, language: en, free: true }
+- { competency: comunicacao-e-trabalho-em-equipe, title: "Amazon Leadership Principles", url: "https://www.amazon.jobs/content/en/our-workplace/leadership-principles", type: artigo, language: en, free: true }
+- { competency: comunicacao-e-trabalho-em-equipe, title: "Writing good CL descriptions (Google)", url: "https://google.github.io/eng-practices/review/developer/cl-descriptions.html", type: artigo, language: en, free: true }
+- { competency: ingles, title: "BBC Learning English", url: "https://www.bbc.co.uk/learningenglish/", type: curso, language: en, free: true }

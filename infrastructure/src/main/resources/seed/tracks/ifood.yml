@@ -1,0 +1,19 @@
+# As vagas de cada trilha de área são a contagem da primeira leva da pesquisa de vagas. Os pesos, as
+# vagas por competência e as trilhas de stack são uma estimativa feita a partir dessa leva. A
+# exportação do devready-research substitui este arquivo.
+company: ifood
+tracks:
+  - area: backend
+    stack: todas
+    seniority: todas
+    jobs: 1
+    units:
+      - { competency: sql-e-modelagem-de-dados, weight: 1.0, requirement: obrigatoria, jobs: 1 }
+      - { competency: kotlin, weight: 1.0, requirement: obrigatoria, jobs: 1 }
+      - { competency: java, weight: 1.0, requirement: desejavel, jobs: 1 }
+      - { competency: spring, weight: 1.0, requirement: desejavel, jobs: 1 }
+      - { competency: apis-rest, weight: 1.0, requirement: obrigatoria, jobs: 1 }
+      - { competency: testes-automatizados, weight: 1.0, requirement: obrigatoria, jobs: 1 }
+      - { competency: mensageria-e-processamento-assincrono, weight: 1.0, requirement: desejavel, jobs: 1 }
+      - { competency: nuvem, weight: 1.0, requirement: desejavel, jobs: 1 }
+      - { competency: ingles, weight: 1.0, requirement: desejavel, jobs: 1 }

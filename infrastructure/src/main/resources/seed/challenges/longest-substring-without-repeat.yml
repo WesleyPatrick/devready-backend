@@ -1,0 +1,100 @@
+slug: longest-substring-without-repeat
+title: Maior substring sem repetição
+area: backend
+level: senior
+difficulty: medium
+tags: [strings, hash-map, algoritmos]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Dada uma string `s`, devolva o tamanho da maior substring (trecho contíguo) que não tem nenhum caractere repetido.
+
+  A string pode ter letras (maiúsculas e minúsculas contam como caracteres diferentes), dígitos, espaços e símbolos, com `0 <= s.length <= 50000`. Uma string vazia tem resposta `0`.
+
+  Exemplo: para `s = "abcabcbb"`, a resposta é `3`, por causa de `"abc"`. Para `s = "bbbbb"`, é `1`. Para `s = "pwwkew"`, é `3` (`"wke"`; note que `"pwke"` não serve, porque não é contígua).
+approachSummary: |
+  Testar todas as substrings custa O(n²) ou pior. A solução esperada é a janela deslizante: mantenha um mapa do último índice em que cada caractere apareceu e um início `left` da janela. Ao ler `s[i]`, se ele já apareceu dentro da janela (último índice maior ou igual a `left`), mova `left` para esse índice mais um; depois registre o índice atual e atualize o melhor tamanho com `i - left + 1`. Uma passada: O(n) de tempo e O(k) de memória, com k o tamanho do alfabeto.
+languages:
+  java:
+    functionName: lengthOfLongestSubstring
+    starterCode: |
+      class Solution {
+          public int lengthOfLongestSubstring(String s) {
+              // sua solução
+              return 0;
+          }
+      }
+    referenceSolution: |
+      import java.util.HashMap;
+      import java.util.Map;
+
+      class Solution {
+          public int lengthOfLongestSubstring(String s) {
+              Map<Character, Integer> last = new HashMap<>();
+              int best = 0;
+              int left = 0;
+              for (int i = 0; i < s.length(); i++) {
+                  char c = s.charAt(i);
+                  Integer prev = last.get(c);
+                  if (prev != null && prev >= left) {
+                      left = prev + 1;
+                  }
+                  last.put(c, i);
+                  best = Math.max(best, i - left + 1);
+              }
+              return best;
+          }
+      }
+  python:
+    functionName: length_of_longest_substring
+    starterCode: |
+      class Solution:
+          def length_of_longest_substring(self, s):
+              # sua solução
+              return 0
+    referenceSolution: |
+      class Solution:
+          def length_of_longest_substring(self, s):
+              last = {}
+              best = 0
+              left = 0
+              for i, c in enumerate(s):
+                  if c in last and last[c] >= left:
+                      left = last[c] + 1
+                  last[c] = i
+                  best = max(best, i - left + 1)
+              return best
+  javascript:
+    functionName: lengthOfLongestSubstring
+    starterCode: |
+      class Solution {
+        lengthOfLongestSubstring(s) {
+          // sua solução
+          return 0;
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        lengthOfLongestSubstring(s) {
+          const last = new Map();
+          let best = 0;
+          let left = 0;
+          for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (last.has(c) && last.get(c) >= left) left = last.get(c) + 1;
+            last.set(c, i);
+            best = Math.max(best, i - left + 1);
+          }
+          return best;
+        }
+      }
+testCases:
+  - { args: ["abcabcbb"], expected: 3, visible: true }
+  - { args: ["bbbbb"], expected: 1, visible: true }
+  - { args: ["pwwkew"], expected: 3, visible: true }
+  - { args: [""], expected: 0, visible: false }
+  - { args: ["a"], expected: 1, visible: false }
+  - { args: ["abba"], expected: 2, visible: false }
+  - { args: ["dvdf"], expected: 3, visible: false }
+  - { args: ["tmmzuxt"], expected: 5, visible: false }

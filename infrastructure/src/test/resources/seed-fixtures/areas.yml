@@ -1,0 +1,6 @@
+- slug: backend
+  name: Backend
+  questionCount: 8
+  challengeCount: 2
+  durationMinutes: 45
+  objectiveWeight: 0.5

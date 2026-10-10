@@ -1,0 +1,108 @@
+slug: is-palindrome
+title: Frase palíndroma
+area: frontend
+level: junior
+difficulty: easy
+tags: [strings, algoritmos]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Diga se a frase `s` é um palíndromo, ou seja, se ela é lida igual da esquerda para a direita e da direita para a esquerda.
+
+  Considere apenas letras e dígitos e ignore espaços, pontuação e a diferença entre maiúsculas e minúsculas. As entradas não têm acentos. Uma frase sem nenhuma letra ou dígito, inclusive a vazia, conta como palíndromo.
+
+  Exemplo: `"Roma me tem amor"` é palíndromo (`romametemamor` lido ao contrário é igual), e `"entrevista"` não é.
+approachSummary: |
+  Use dois ponteiros, um em cada ponta. Avance o da esquerda e recue o da direita pulando o que não for letra ou dígito; quando os dois pararem, compare os caracteres em minúsculas e, se forem diferentes, a resposta é falso. Termine quando os ponteiros se cruzarem. O(n) de tempo e O(1) de memória extra; montar a string limpa e compará-la com a invertida também é O(n), mas gasta memória.
+languages:
+  java:
+    functionName: isPalindrome
+    starterCode: |
+      class Solution {
+          public boolean isPalindrome(String s) {
+              // sua solução
+              return false;
+          }
+      }
+    referenceSolution: |
+      class Solution {
+          public boolean isPalindrome(String s) {
+              int left = 0;
+              int right = s.length() - 1;
+              while (left < right) {
+                  if (!Character.isLetterOrDigit(s.charAt(left))) {
+                      left++;
+                  } else if (!Character.isLetterOrDigit(s.charAt(right))) {
+                      right--;
+                  } else {
+                      if (Character.toLowerCase(s.charAt(left)) != Character.toLowerCase(s.charAt(right))) {
+                          return false;
+                      }
+                      left++;
+                      right--;
+                  }
+              }
+              return true;
+          }
+      }
+  python:
+    functionName: is_palindrome
+    starterCode: |
+      class Solution:
+          def is_palindrome(self, s):
+              # sua solução
+              return False
+    referenceSolution: |
+      class Solution:
+          def is_palindrome(self, s):
+              left, right = 0, len(s) - 1
+              while left < right:
+                  if not s[left].isalnum():
+                      left += 1
+                  elif not s[right].isalnum():
+                      right -= 1
+                  else:
+                      if s[left].lower() != s[right].lower():
+                          return False
+                      left += 1
+                      right -= 1
+              return True
+  javascript:
+    functionName: isPalindrome
+    starterCode: |
+      class Solution {
+        isPalindrome(s) {
+          // sua solução
+          return false;
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        isPalindrome(s) {
+          const isAlnum = (c) => /[\p{L}\p{N}]/u.test(c);
+          let left = 0;
+          let right = s.length - 1;
+          while (left < right) {
+            if (!isAlnum(s[left])) {
+              left++;
+            } else if (!isAlnum(s[right])) {
+              right--;
+            } else {
+              if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;
+              left++;
+              right--;
+            }
+          }
+          return true;
+        }
+      }
+testCases:
+  - { args: ["Roma me tem amor"], expected: true, visible: true }
+  - { args: ["entrevista"], expected: false, visible: true }
+  - { args: ["A base do teto desaba."], expected: true, visible: false }
+  - { args: ["Socorram-me, subi no onibus em Marrocos!"], expected: true, visible: false }
+  - { args: [""], expected: true, visible: false }
+  - { args: [".,! "], expected: true, visible: false }
+  - { args: ["0P"], expected: false, visible: false }
+  - { args: ["Ab"], expected: false, visible: false }

@@ -1,0 +1,89 @@
+slug: count-log-levels
+title: Contagem de níveis de log
+area: devops
+level: junior
+difficulty: easy
+tags: [shell, observabilidade, strings]
+timeLimitMs: 5000
+memoryLimitKb: 262144
+comparison: exact
+statement: |
+  Você recebe as linhas de um arquivo de log. Cada linha começa com um carimbo de tempo, um espaço e o nível entre colchetes: `[ERROR]`, `[WARN]` ou `[INFO]`. Linhas em branco ou fora desse formato devem ser ignoradas.
+
+  Escreva uma função que receba a lista de linhas e devolva um array com três inteiros: a quantidade de linhas `ERROR`, `WARN` e `INFO`, nessa ordem.
+
+  Exemplo: para as linhas `10:00:01 [INFO] app started`, `10:00:02 [ERROR] db down` e `10:00:03 [INFO] retry`, a resposta é `[1, 0, 2]`.
+approachSummary: |
+  Percorra as linhas uma vez. Para cada uma, separe pelo primeiro espaço e confira se o segundo token é exatamente `[ERROR]`, `[WARN]` ou `[INFO]`; some no contador certo e ignore o resto. Complexidade linear no número de linhas, sem estrutura auxiliar além de três contadores. O erro comum é usar `contains`, que aceita `[INFO]` no meio da mensagem.
+languages:
+  java:
+    functionName: countLogLevels
+    starterCode: |
+      class Solution {
+          public int[] countLogLevels(String[] lines) {
+              // sua solução
+              return new int[]{0, 0, 0};
+          }
+      }
+    referenceSolution: |
+      class Solution {
+          public int[] countLogLevels(String[] lines) {
+              int[] counts = new int[3];
+              for (String line : lines) {
+                  if (line == null) continue;
+                  String[] parts = line.trim().split(" ", 3);
+                  if (parts.length < 2) continue;
+                  if (parts[1].equals("[ERROR]")) {
+                      counts[0]++;
+                  } else if (parts[1].equals("[WARN]")) {
+                      counts[1]++;
+                  } else if (parts[1].equals("[INFO]")) {
+                      counts[2]++;
+                  }
+              }
+              return counts;
+          }
+      }
+  python:
+    functionName: count_log_levels
+    starterCode: |
+      class Solution:
+          def count_log_levels(self, lines):
+              # sua solução
+              return [0, 0, 0]
+    referenceSolution: |
+      class Solution:
+          def count_log_levels(self, lines):
+              counts = {"[ERROR]": 0, "[WARN]": 0, "[INFO]": 0}
+              for line in lines:
+                  parts = line.strip().split(" ", 2)
+                  if len(parts) >= 2 and parts[1] in counts:
+                      counts[parts[1]] += 1
+              return [counts["[ERROR]"], counts["[WARN]"], counts["[INFO]"]]
+  javascript:
+    functionName: countLogLevels
+    starterCode: |
+      class Solution {
+        countLogLevels(lines) {
+          // sua solução
+          return [0, 0, 0];
+        }
+      }
+    referenceSolution: |
+      class Solution {
+        countLogLevels(lines) {
+          const counts = { "[ERROR]": 0, "[WARN]": 0, "[INFO]": 0 };
+          for (const line of lines) {
+            const parts = line.trim().split(" ");
+            if (parts.length >= 2 && parts[1] in counts) counts[parts[1]]++;
+          }
+          return [counts["[ERROR]"], counts["[WARN]"], counts["[INFO]"]];
+        }
+      }
+testCases:
+  - { args: [["10:00:01 [INFO] app started", "10:00:02 [ERROR] db down", "10:00:03 [INFO] retry"]], expected: [1, 0, 2], visible: true }
+  - { args: [["10:00:01 [WARN] disk at 90%", "10:00:02 [WARN] disk at 95%"]], expected: [0, 2, 0], visible: true }
+  - { args: [[]], expected: [0, 0, 0], visible: false }
+  - { args: [["", "   ", "sem formato"]], expected: [0, 0, 0], visible: false }
+  - { args: [["10:00:01 [DEBUG] verbose", "10:00:02 [INFO] ok"]], expected: [0, 0, 1], visible: false }
+  - { args: [["10:00:01 [INFO] mensagem com [ERROR] no texto"]], expected: [0, 0, 1], visible: false }

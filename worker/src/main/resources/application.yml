@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: devready-worker
+  main:
+    web-application-type: none
+    keep-alive: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/devready}
+    username: ${DATABASE_USER:devready}
+    password: ${DATABASE_PASSWORD:devready}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: false
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+  rabbitmq:
+    addresses: ${RABBITMQ_URL:amqp://devready:devready@localhost:5672}
+    listener:
+      simple:
+        # Poucos envios ao mesmo tempo: o Judge0 local dá conta de um ou dois.
+        concurrency: 1
+        max-concurrency: 2
+        prefetch: 1
+        # Mensagem que derruba o listener vai para a devready.dlq, em vez de voltar para a fila.
+        default-requeue-rejected: false
+
+devready:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-deploy-0123456789}
+    access-token-ttl: 15m
+  auth:
+    refresh-token-ttl: 7d
+    one-time-code-ttl: 60s
+  seed:
+    enabled: false
+  sessions:
+    # De quanto em quanto tempo o agendador vence as simulações e tenta corrigir as entregues.
+    expiry-delay-ms: 60000
+  # Só o worker fala com o Judge0. No modo por processo, o limite de memória é de espaço de
+  # endereço: a JVM sob emulação só sobe com 8 GB.
+  judge0:
+    url: ${JUDGE0_URL:http://localhost:2358}
+    poll-interval: 500ms
+    poll-timeout: 60s
+    languages:
+      JAVA: { id: 62, memory-limit-kb: 8388608 }
+      PYTHON: { id: 71, memory-limit-kb: 4194304 }
+      JAVASCRIPT: { id: 63, memory-limit-kb: 4194304 }

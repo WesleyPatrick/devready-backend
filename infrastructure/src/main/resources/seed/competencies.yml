@@ -1,0 +1,163 @@
+# Nome, slug e categoria são os do glossário da pesquisa de vagas; resumo, tags e dificuldade foram
+# escritos para a plataforma, fora da pesquisa.
+- slug: estruturas-de-dados-e-algoritmos
+  name: Estruturas de dados e algoritmos
+  category: fundamento
+  difficulty: medium
+  summary: >-
+    Listas, mapas, pilhas, árvores e grafos, com o custo de cada operação. É a base dos testes de código das entrevistas, do teste online à conversa com o time.
+  tags: [estruturas-de-dados, algoritmos, arrays, strings, hash-map, complexidade, recursao]
+- slug: design-de-sistemas
+  name: Design de sistemas
+  category: fundamento
+  difficulty: hard
+  summary: >-
+    Escala, cache, filas, particionamento e consistência. É a conversa de quadro branco das entrevistas de pleno para cima.
+  tags: [arquitetura, cache, mensageria]
+- slug: sql-e-modelagem-de-dados
+  name: SQL e modelagem de dados
+  category: fundamento
+  difficulty: medium
+  summary: >-
+    Consultas com junção e agregação, índices, transações e como modelar tabelas para o que a aplicação precisa ler e gravar.
+  tags: [sql, banco-de-dados, orm]
+- slug: apis-rest
+  name: APIs REST
+  category: pratica
+  difficulty: easy
+  summary: >-
+    Métodos, status, idempotência e como desenhar recursos HTTP que outro time consegue usar sem perguntar.
+  tags: [http, rest]
+- slug: testes-automatizados
+  name: Testes automatizados
+  category: pratica
+  difficulty: easy
+  summary: >-
+    Testes de unidade e de integração, dublês de teste e como um teste prova que pega o erro que diz pegar.
+  tags: [testes]
+- slug: git-e-fluxo-de-codigo
+  name: Git e fluxo de código
+  category: pratica
+  difficulty: easy
+  summary: >-
+    Ramos, merge, rebase, conflitos e revisão de código: o dia a dia de quem trabalha num repositório com outras pessoas.
+  tags: [git]
+- slug: nuvem
+  name: Nuvem
+  category: pratica
+  difficulty: medium
+  summary: >-
+    Os serviços básicos de um provedor (computação, armazenamento, rede, filas) e o que muda quando a infraestrutura é alugada por uso.
+  tags: [nuvem, infraestrutura-como-codigo, redes]
+- slug: containers-e-orquestracao
+  name: Containers e orquestração
+  category: pratica
+  difficulty: medium
+  summary: >-
+    Imagens, contêineres e como um orquestrador como o Kubernetes mantém a aplicação no ar, recriando o que cai.
+  tags: [docker, kubernetes, linux, shell]
+- slug: ci-cd
+  name: "CI/CD"
+  category: pratica
+  difficulty: easy
+  summary: >-
+    Pipeline que testa, empacota e publica a cada mudança, sem passo manual escondido.
+  tags: [ci-cd]
+- slug: mensageria-e-processamento-assincrono
+  name: Mensageria e processamento assíncrono
+  category: pratica
+  difficulty: hard
+  summary: >-
+    Filas e eventos para separar quem produz de quem consome, com reentrega, ordem e mensagem duplicada no meio do caminho.
+  tags: [mensageria]
+- slug: observabilidade
+  name: Observabilidade
+  category: pratica
+  difficulty: medium
+  summary: >-
+    Logs, métricas e traces para saber o que o sistema está fazendo, e alertas que avisam antes de o usuário reclamar.
+  tags: [observabilidade]
+- slug: seguranca-de-aplicacoes
+  name: Segurança de aplicações
+  category: pratica
+  difficulty: medium
+  summary: >-
+    Autenticação, autorização, senha guardada do jeito certo e as falhas do OWASP Top 10 que viram incidente.
+  tags: [seguranca, autenticacao]
+- slug: java
+  name: Java
+  category: linguagem
+  difficulty: medium
+  summary: >-
+    A linguagem e a biblioteca padrão: coleções, exceções, igualdade, imutabilidade e o básico de concorrência.
+  tags: [java]
+- slug: kotlin
+  name: Kotlin
+  category: linguagem
+  difficulty: medium
+  summary: >-
+    A linguagem da JVM com nulos no sistema de tipos, data classes e corrotinas, comum em times que vieram do Java.
+  tags: []
+- slug: python
+  name: Python
+  category: linguagem
+  difficulty: easy
+  summary: >-
+    A linguagem e o jeito dela de resolver problema: listas, dicionários, compreensões e a biblioteca padrão.
+  tags: []
+- slug: javascript-e-typescript
+  name: JavaScript e TypeScript
+  category: linguagem
+  difficulty: medium
+  summary: >-
+    Escopo, closures, o laço de eventos e promises, e os tipos do TypeScript para pegar erro antes de rodar.
+  tags: [javascript, typescript, dom, performance-web]
+- slug: go
+  name: Go
+  category: linguagem
+  difficulty: medium
+  summary: >-
+    A linguagem de tipos simples, com goroutines e canais para concorrência, muito usada em serviços e infraestrutura.
+  tags: []
+- slug: c-sharp
+  name: "C#"
+  category: linguagem
+  difficulty: medium
+  summary: >-
+    A linguagem do .NET: tipos, LINQ, async/await e a biblioteca padrão usada em APIs e serviços.
+  tags: []
+- slug: spring
+  name: Spring
+  category: framework
+  difficulty: medium
+  summary: >-
+    Injeção de dependência, Spring Boot, acesso a dados com JPA e transações: o framework mais pedido para Java no backend.
+  tags: [spring, orm]
+- slug: react
+  name: React
+  category: framework
+  difficulty: medium
+  summary: >-
+    Componentes, estado, efeitos e o que faz uma tela renderizar de novo, com HTML, CSS e acessibilidade por baixo.
+  tags: [react, html, css, acessibilidade]
+- slug: node-js
+  name: Node.js
+  category: framework
+  difficulty: medium
+  summary: >-
+    JavaScript no servidor: o laço de eventos, I/O assíncrono, módulos e as bibliotecas de API mais usadas.
+  tags: [javascript]
+- slug: comunicacao-e-trabalho-em-equipe
+  name: Comunicação e trabalho em equipe
+  category: comportamental
+  difficulty: easy
+  summary: >-
+    Explicar uma decisão técnica, dar e receber revisão e contar uma situação real na entrevista comportamental.
+  tags: []
+- slug: ingles
+  name: Inglês
+  category: comportamental
+  difficulty: medium
+  summary: >-
+    Ler documentação, escrever num pull request e conversar numa entrevista em inglês, como as big techs costumam fazer.
+  tags: []
