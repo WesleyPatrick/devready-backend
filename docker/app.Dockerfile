@@ -1,5 +1,5 @@
 # Uma imagem para a API ou para o worker. Escolha com --build-arg MODULE=api|worker.
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:24-jdk-alpine AS build
 ARG MODULE=api
 WORKDIR /workspace
 
@@ -17,7 +17,7 @@ COPY . .
 RUN ./mvnw -B -q -pl ${MODULE} -am package -DskipTests -Dspotless.check.skip=true \
     && cp ${MODULE}/target/devready-${MODULE}-*-exec.jar /workspace/app.jar
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 RUN addgroup -S devready && adduser -S devready -G devready
 WORKDIR /app
 COPY --from=build /workspace/app.jar app.jar
